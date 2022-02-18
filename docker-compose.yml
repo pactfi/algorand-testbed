@@ -1,0 +1,19 @@
+version: '3.5'
+
+services:
+  algorand-node:
+    image: exchange-algorand-devnet
+    build:
+      context: ./devnet
+    restart: unless-stopped
+    environment:
+      ALGORAND_DATA: /root/node/devnet/primary
+    ports:
+      - "8787:8787"
+    command: /root/node/run.sh
+    networks:
+      - testbed
+
+networks:
+  testbed:
+    name: "testbed"

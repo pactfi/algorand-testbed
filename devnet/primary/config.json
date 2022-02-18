@@ -1,0 +1,9 @@
+{
+	"Version": 16,
+	"Archival": true,
+	"GossipFanout": 0,
+    "EnableDeveloperAPI": true,
+	"EndpointAddress": "0.0.0.0:8787",
+	"DNSBootstrapID": "",
+	"EnableProfiler": true
+}

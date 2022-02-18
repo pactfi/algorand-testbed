@@ -1,0 +1,28 @@
+# Python caches
+.pytest_cache
+.mypy_cache
+__pycache__
+**/*.pyc
+**/__pycache__
+
+# Virtualenv
+venv
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Build output
+dist
+
+# testbed has to be checked out to run tests
+algorand-testbed
+
+# IDEs
+.idea
