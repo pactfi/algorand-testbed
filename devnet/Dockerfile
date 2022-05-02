@@ -1,4 +1,4 @@
-FROM algorand/stable:latest
+FROM algorand/betanet:latest
 
 WORKDIR /root/node
 

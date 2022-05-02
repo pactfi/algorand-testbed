@@ -1,0 +1,1660 @@
+#pragma version 6
+txn OnCompletion
+int NoOp
+==
+bnz main_l2
+err
+main_l2:
+txn RekeyTo
+global ZeroAddress
+==
+txna Assets 0
+int {primary_asset_id}
+==
+&&
+txna Assets 1
+int {secondary_asset_id}
+==
+&&
+txn NumAssets
+int 3
+<=
+&&
+txn NumAssets
+int 3
+==
+bnz main_l78
+int 1
+main_l4:
+&&
+!
+bnz main_l77
+txn ApplicationID
+int 0
+==
+bnz main_l76
+txna ApplicationArgs 0
+byte "OPTIN"
+==
+bnz main_l73
+txna ApplicationArgs 0
+byte "CLT"
+==
+bnz main_l64
+txna ApplicationArgs 0
+byte "SWAP"
+==
+bnz main_l49
+txna ApplicationArgs 0
+byte "ADDLIQ"
+==
+bnz main_l30
+txna ApplicationArgs 0
+byte "REMLIQ"
+==
+bnz main_l29
+txna ApplicationArgs 0
+byte "WITHDRAWFEES"
+==
+bnz main_l28
+txna ApplicationArgs 0
+byte "RAMP_A"
+==
+bnz main_l24
+txna ApplicationArgs 0
+byte "STOP_RAMP_A"
+==
+bnz main_l23
+txna ApplicationArgs 0
+byte "APPLY_ADMIN_TRANSFER"
+==
+bnz main_l22
+txna ApplicationArgs 0
+byte "COMMIT_ADMIN_TRANSFER"
+==
+bnz main_l21
+txna ApplicationArgs 0
+byte "REVERT_ADMIN_TRANSFER"
+==
+bnz main_l20
+txna ApplicationArgs 0
+byte "CHANGE_PACT_FEE"
+==
+bnz main_l19
+err
+main_l19:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+txna ApplicationArgs 1
+btoi
+int 10000
+<
+assert
+int {fee_bps}
+txna ApplicationArgs 1
+btoi
++
+int 10000
+<
+assert
+byte "PACT_FEE_BPS"
+txna ApplicationArgs 1
+btoi
+app_global_put
+int 1
+return
+main_l20:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+byte "ADMIN_TRANSFER_DEADLINE"
+int 0
+app_global_put
+int 1
+return
+main_l21:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+byte "ADMIN_TRANSFER_DEADLINE"
+app_global_get
+int 0
+==
+assert
+byte "ADMIN_TRANSFER_DEADLINE"
+global LatestTimestamp
+int 259200
++
+app_global_put
+byte "FUTURE_ADMIN"
+txna Accounts 1
+app_global_put
+int 1
+return
+main_l22:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+global LatestTimestamp
+byte "ADMIN_TRANSFER_DEADLINE"
+app_global_get
+>=
+assert
+byte "ADMIN_TRANSFER_DEADLINE"
+app_global_get
+int 0
+!=
+assert
+byte "ADMIN_TRANSFER_DEADLINE"
+int 0
+app_global_put
+byte "ADMIN"
+byte "FUTURE_ADMIN"
+app_global_get
+app_global_put
+int 1
+return
+main_l23:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+store 25
+byte "INITIAL_A"
+load 25
+app_global_put
+byte "FUTURE_A"
+load 25
+app_global_put
+byte "INITIAL_A_TIME"
+global LatestTimestamp
+app_global_put
+byte "FUTURE_A_TIME"
+global LatestTimestamp
+app_global_put
+int 1
+return
+main_l24:
+txn Sender
+byte "ADMIN"
+app_global_get
+==
+assert
+global LatestTimestamp
+byte "INITIAL_A_TIME"
+app_global_get
+int 86400
++
+>=
+assert
+txna ApplicationArgs 2
+btoi
+global LatestTimestamp
+int 86400
++
+>=
+assert
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+store 23
+txna ApplicationArgs 1
+btoi
+int 0
+>
+txna ApplicationArgs 1
+btoi
+int 1000000
+<
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 24
+load 24
+load 23
+<
+bnz main_l27
+load 24
+load 23
+int 10000
+*
+<=
+assert
+main_l26:
+byte "INITIAL_A"
+load 23
+app_global_put
+byte "FUTURE_A"
+load 24
+app_global_put
+byte "INITIAL_A_TIME"
+global LatestTimestamp
+app_global_put
+byte "FUTURE_A_TIME"
+txna ApplicationArgs 2
+btoi
+app_global_put
+int 1
+return
+main_l27:
+load 24
+int 10000
+*
+load 23
+>=
+assert
+b main_l26
+main_l28:
+byte "TREASURY"
+app_global_get
+int {primary_asset_id}
+byte "PRIMARY_FEES"
+app_global_get
+callsub SendToAddress_1
+byte "TREASURY"
+app_global_get
+int {secondary_asset_id}
+byte "SECONDARY_FEES"
+app_global_get
+callsub SendToAddress_1
+byte "PRIMARY_FEES"
+int 0
+app_global_put
+byte "SECONDARY_FEES"
+int 0
+app_global_put
+int 1
+return
+main_l29:
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns XferAsset
+byte "LTID"
+app_global_get
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+assert
+byte "L"
+app_global_get
+int 0
+!=
+assert
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+byte "A"
+app_global_get
+mulw
+int 0
+byte "L"
+app_global_get
+divmodw
+pop
+pop
+swap
+!
+assert
+store 21
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+byte "B"
+app_global_get
+mulw
+int 0
+byte "L"
+app_global_get
+divmodw
+pop
+pop
+swap
+!
+assert
+store 22
+byte "A"
+byte "A"
+app_global_get
+load 21
+-
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+load 22
+-
+app_global_put
+byte "L"
+byte "L"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+-
+app_global_put
+load 22
+txna ApplicationArgs 2
+btoi
+-
+pop
+load 21
+txna ApplicationArgs 1
+btoi
+-
+pop
+int {primary_asset_id}
+load 21
+callsub SendToCaller_0
+int {secondary_asset_id}
+load 22
+callsub SendToCaller_0
+int 1
+return
+main_l30:
+byte "LTID"
+app_global_get
+assert
+int {primary_asset_id}
+!
+bnz main_l48
+txn GroupIndex
+int 2
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 2
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns XferAsset
+int {primary_asset_id}
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+main_l32:
+assert
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns XferAsset
+int {secondary_asset_id}
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+assert
+int 5
+callsub increaseopcodequota_5
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+store 16
+int 1000
+byte "A"
+app_global_get
+byte "B"
+app_global_get
+int 2
+load 16
+int 4
+callsub getD_2
+store 17
+int 1000
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l47
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l34:
++
+byte "B"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
++
+int 2
+load 16
+int 4
+callsub getD_2
+store 18
+byte "L"
+app_global_get
+int 0
+==
+bnz main_l40
+byte "L"
+app_global_get
+load 18
+load 17
+-
+mulw
+int 0
+load 17
+divmodw
+pop
+pop
+swap
+!
+assert
+store 19
+load 19
+txna ApplicationArgs 1
+btoi
+-
+pop
+load 19
+int 0
+>
+assert
+byte "LTID"
+app_global_get
+load 19
+callsub SendToCaller_0
+byte "L"
+byte "L"
+app_global_get
+load 19
++
+app_global_put
+byte "A"
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l39
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l37:
++
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
++
+app_global_put
+main_l38:
+int 1
+return
+main_l39:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l37
+main_l40:
+int {primary_asset_id}
+!
+bnz main_l46
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l42:
+itob
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+itob
+b*
+bsqrt
+btoi
+store 20
+byte "L"
+load 20
+app_global_put
+byte "A"
+int {primary_asset_id}
+!
+bnz main_l45
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l44:
+app_global_put
+byte "B"
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+app_global_put
+load 20
+int 1000
+-
+store 20
+load 20
+txna ApplicationArgs 1
+btoi
+>=
+assert
+byte "LTID"
+app_global_get
+load 20
+callsub SendToCaller_0
+b main_l38
+main_l45:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l44
+main_l46:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l42
+main_l47:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l34
+main_l48:
+txn GroupIndex
+int 2
+-
+gtxns TypeEnum
+int pay
+==
+txn GroupIndex
+int 2
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns CloseRemainderTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns Receiver
+global CurrentApplicationAddress
+==
+&&
+b main_l32
+main_l49:
+int 5
+callsub increaseopcodequota_5
+int {primary_asset_id}
+!
+bnz main_l63
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns XferAsset
+int {primary_asset_id}
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+main_l51:
+bnz main_l56
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns XferAsset
+int {secondary_asset_id}
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+bnz main_l55
+int 0
+return
+int 1
+return
+main_l55:
+int 1000
+byte "A"
+app_global_get
+byte "B"
+app_global_get
+int 2
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+int 4
+callsub getD_2
+store 15
+byte "B"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
++
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+load 15
+int 4
+int 1000
+callsub gety_4
+store 11
+byte "A"
+app_global_get
+load 11
+-
+store 14
+load 14
+byte "PACT_FEE_BPS"
+app_global_get
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 13
+load 14
+int 10000
+int {fee_bps}
+-
+byte "PACT_FEE_BPS"
+app_global_get
+-
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 12
+load 12
+txna ApplicationArgs 1
+btoi
+-
+pop
+byte "PRIMARY_FEES"
+byte "PRIMARY_FEES"
+app_global_get
+load 13
++
+app_global_put
+byte "A"
+byte "A"
+app_global_get
+load 12
+-
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
++
+app_global_put
+int {primary_asset_id}
+load 12
+callsub SendToCaller_0
+int 1
+return
+main_l56:
+int 1000
+byte "A"
+app_global_get
+byte "B"
+app_global_get
+int 2
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+int 4
+callsub getD_2
+store 10
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l62
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+main_l58:
++
+byte "INITIAL_A"
+app_global_get
+byte "FUTURE_A"
+app_global_get
+byte "INITIAL_A_TIME"
+app_global_get
+byte "FUTURE_A_TIME"
+app_global_get
+callsub amplifier_3
+load 10
+int 4
+int 1000
+callsub gety_4
+store 6
+byte "B"
+app_global_get
+load 6
+-
+store 9
+load 9
+byte "PACT_FEE_BPS"
+app_global_get
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 8
+load 9
+int 10000
+int {fee_bps}
+-
+byte "PACT_FEE_BPS"
+app_global_get
+-
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 7
+load 7
+txna ApplicationArgs 1
+btoi
+-
+pop
+byte "SECONDARY_FEES"
+byte "SECONDARY_FEES"
+app_global_get
+load 8
++
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+load 7
+-
+app_global_put
+byte "A"
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l61
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+main_l60:
++
+app_global_put
+int {secondary_asset_id}
+load 7
+callsub SendToCaller_0
+int 1
+return
+main_l61:
+txn GroupIndex
+int 1
+-
+gtxns Amount
+b main_l60
+main_l62:
+txn GroupIndex
+int 1
+-
+gtxns Amount
+b main_l58
+main_l63:
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int pay
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns CloseRemainderTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns Receiver
+global CurrentApplicationAddress
+==
+&&
+b main_l51
+main_l64:
+txn Sender
+global CreatorAddress
+==
+assert
+byte "LTID"
+app_global_get
+int 0
+==
+assert
+int {primary_asset_id}
+!
+bnz main_l72
+int {primary_asset_id}
+asset_params_get AssetUnitName
+store 3
+store 2
+load 2
+byte ""
+==
+bnz main_l71
+load 2
+store 0
+main_l67:
+int {secondary_asset_id}
+asset_params_get AssetUnitName
+store 5
+store 4
+load 4
+byte ""
+==
+bnz main_l70
+load 4
+store 1
+main_l69:
+itxn_begin
+int 0
+itxn_field Fee
+int acfg
+itxn_field TypeEnum
+int 18446744073709551615
+itxn_field ConfigAssetTotal
+int 6
+itxn_field ConfigAssetDecimals
+load 0
+byte "/"
+concat
+load 1
+concat
+byte " [SI] PACT LP TKN"
+concat
+itxn_field ConfigAssetName
+byte "SIPLP"
+itxn_field ConfigAssetUnitName
+byte "https://pact.fi/"
+itxn_field ConfigAssetURL
+global CurrentApplicationAddress
+itxn_field ConfigAssetReserve
+itxn_submit
+byte "LTID"
+itxn CreatedAssetID
+app_global_put
+int 1
+return
+main_l70:
+byte "?"
+store 1
+b main_l69
+main_l71:
+byte "?"
+store 0
+b main_l67
+main_l72:
+byte "ALGO"
+store 0
+b main_l67
+main_l73:
+txn Sender
+global CreatorAddress
+==
+assert
+int {primary_asset_id}
+!
+!
+bnz main_l75
+main_l74:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+int {secondary_asset_id}
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+return
+main_l75:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+int {primary_asset_id}
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+b main_l74
+main_l76:
+int {primary_asset_id}
+int {secondary_asset_id}
+<
+assert
+int {fee_bps}
+int 10000
+<
+assert
+int {pact_fee_bps}
+int 10000
+<
+assert
+int {fee_bps}
+int {pact_fee_bps}
++
+int 10000
+<
+assert
+int {initial_A}
+int 0
+>
+int {initial_A}
+int 1000000
+<
+&&
+assert
+byte "CONFIG"
+int {primary_asset_id}
+itob
+int {secondary_asset_id}
+itob
+concat
+int {fee_bps}
+itob
+concat
+int 1000
+itob
+concat
+app_global_put
+byte "ADMIN"
+addr {admin_and_treasury_address}
+app_global_put
+byte "FUTURE_ADMIN"
+addr {admin_and_treasury_address}
+app_global_put
+byte "TREASURY"
+addr {admin_and_treasury_address}
+app_global_put
+byte "A"
+int 0
+app_global_put
+byte "B"
+int 0
+app_global_put
+byte "L"
+int 0
+app_global_put
+byte "LTID"
+int 0
+app_global_put
+byte "INITIAL_A"
+int {initial_A}
+app_global_put
+byte "FUTURE_A"
+int {initial_A}
+app_global_put
+byte "INITIAL_A_TIME"
+global LatestTimestamp
+app_global_put
+byte "FUTURE_A_TIME"
+global LatestTimestamp
+app_global_put
+byte "ADMIN_TRANSFER_DEADLINE"
+int 0
+app_global_put
+byte "PACT_FEE_BPS"
+int {pact_fee_bps}
+app_global_put
+byte "PRIMARY_FEES"
+int 0
+app_global_put
+byte "SECONDARY_FEES"
+int 0
+app_global_put
+int 1
+return
+main_l77:
+int 0
+return
+main_l78:
+txna Assets 2
+byte "LTID"
+app_global_get
+==
+b main_l4
+
+// SendToCaller
+SendToCaller_0:
+store 27
+store 26
+load 26
+bnz SendToCaller_0_l2
+itxn_begin
+int pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+load 27
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+b SendToCaller_0_l3
+SendToCaller_0_l2:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+load 27
+itxn_field AssetAmount
+load 26
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+SendToCaller_0_l3:
+retsub
+
+// SendToAddress
+SendToAddress_1:
+store 30
+store 29
+store 28
+load 29
+bnz SendToAddress_1_l2
+itxn_begin
+int pay
+itxn_field TypeEnum
+load 28
+itxn_field Receiver
+load 30
+itxn_field Amount
+int 0
+itxn_field Fee
+itxn_submit
+b SendToAddress_1_l3
+SendToAddress_1_l2:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 28
+itxn_field AssetReceiver
+load 30
+itxn_field AssetAmount
+load 29
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+SendToAddress_1_l3:
+retsub
+
+// get_D
+getD_2:
+store 36
+store 35
+store 34
+store 33
+store 32
+store 31
+load 32
+itob
+load 33
+itob
+b+
+store 39
+load 39
+int 0
+itob
+b==
+bnz getD_2_l8
+load 39
+store 41
+load 35
+load 36
+*
+itob
+store 40
+int 0
+store 44
+getD_2_l2:
+load 44
+int 255
+<
+bnz getD_2_l5
+getD_2_l3:
+int 255
+load 44
+==
+bz getD_2_l9
+err
+getD_2_l5:
+load 44
+int 1
++
+store 44
+load 41
+store 38
+load 38
+load 41
+b*
+load 32
+itob
+load 34
+itob
+b*
+b/
+store 38
+load 38
+load 41
+b*
+load 33
+itob
+load 34
+itob
+b*
+b/
+store 38
+load 41
+store 37
+load 41
+load 40
+load 39
+b*
+load 31
+itob
+b/
+load 38
+load 34
+itob
+b*
+b+
+b*
+store 42
+load 40
+load 31
+itob
+b-
+load 41
+b*
+load 31
+itob
+b/
+load 34
+itob
+int 1
+itob
+b+
+load 38
+b*
+b+
+store 43
+load 42
+load 43
+b/
+store 41
+load 41
+load 37
+b>
+bnz getD_2_l7
+load 37
+load 41
+b-
+int 1
+itob
+b<=
+bnz getD_2_l3
+b getD_2_l2
+getD_2_l7:
+load 41
+load 37
+b-
+int 1
+itob
+b<=
+bnz getD_2_l3
+b getD_2_l2
+getD_2_l8:
+int 0
+retsub
+getD_2_l9:
+load 41
+btoi
+retsub
+
+// amplifier
+amplifier_3:
+store 48
+store 47
+store 46
+store 45
+global LatestTimestamp
+load 48
+<
+bnz amplifier_3_l2
+load 46
+retsub
+amplifier_3_l2:
+load 46
+load 45
+>
+bnz amplifier_3_l4
+load 45
+load 45
+load 46
+-
+global LatestTimestamp
+load 47
+-
+mulw
+int 0
+load 48
+load 47
+-
+divmodw
+pop
+pop
+swap
+!
+assert
+-
+retsub
+amplifier_3_l4:
+load 45
+load 46
+load 45
+-
+global LatestTimestamp
+load 47
+-
+mulw
+int 0
+load 48
+load 47
+-
+divmodw
+pop
+pop
+swap
+!
+assert
++
+retsub
+
+// get_y
+gety_4:
+store 53
+store 52
+store 51
+store 50
+store 49
+load 51
+itob
+load 51
+itob
+load 51
+itob
+b*
+b*
+load 53
+itob
+b*
+int 4
+itob
+load 49
+itob
+load 50
+load 52
+*
+itob
+b*
+b*
+b/
+store 55
+load 51
+itob
+load 49
+itob
+load 51
+itob
+load 53
+itob
+b*
+load 50
+load 52
+*
+itob
+b/
+b+
+b>=
+bnz gety_4_l2
+load 49
+itob
+load 51
+itob
+load 53
+itob
+b*
+load 50
+load 52
+*
+itob
+b/
+b+
+load 51
+itob
+b-
+store 54
+load 54
+load 54
+b*
+int 4
+itob
+load 55
+b*
+b+
+bsqrt
+load 54
+b-
+int 2
+itob
+b/
+store 56
+b gety_4_l3
+gety_4_l2:
+load 51
+itob
+load 49
+itob
+load 51
+itob
+load 53
+itob
+b*
+load 50
+load 52
+*
+itob
+b/
+b+
+b-
+store 54
+load 54
+load 54
+b*
+int 4
+itob
+load 55
+b*
+b+
+bsqrt
+load 54
+b+
+int 2
+itob
+b/
+store 56
+gety_4_l3:
+load 56
+btoi
+retsub
+
+// increase_opcode_quota
+increaseopcodequota_5:
+store 57
+int 0
+store 58
+increaseopcodequota_5_l1:
+load 58
+load 57
+<
+bz increaseopcodequota_5_l3
+itxn_begin
+int appl
+itxn_field TypeEnum
+int DeleteApplication
+itxn_field OnCompletion
+byte base64(BoEB)
+itxn_field ApprovalProgram
+byte base64(BoEB)
+itxn_field ClearStateProgram
+int 0
+itxn_field Fee
+itxn_submit
+load 58
+int 1
++
+store 58
+b increaseopcodequota_5_l1
+increaseopcodequota_5_l3:
+retsub

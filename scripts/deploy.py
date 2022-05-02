@@ -37,36 +37,41 @@ class ACTION:
     CREATE_LIQUIDITY_TOKEN = "CLT"
     OPT_IN_TO_ASSETS = "OPTIN"  # contract opt-in to assets
 
-
-def get_exchange_contract_txn(primary_asset_id, secondary_asset_id, fee_bps):
+def get_contract_txn(contract_type: str, global_schema, teal_version: int, **format_data):
     sender = DEPLOYER_ADDRESS
-    path = pathlib.Path(__file__).parent.parent / "exchange.teal"
+    path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
     with open(path, "r") as file_:
-        ssc_teal = file_.read().format(
-            primary_asset_id=primary_asset_id,
-            secondary_asset_id=secondary_asset_id,
-            fee_bps=fee_bps,
-        )
-    clear_teal = "#pragma version 5\nint 1"
+        ssc_teal = file_.read().format(**format_data)
+    clear_teal = f"#pragma version {teal_version}\nint 1"
     # compile contracts to bytecode
     compiled_clear = client.compile(clear_teal)
     compiled_SSC = client.compile(ssc_teal)
 
-    ssc_raw = compiled_SSC["result"]  # type: str
-    clear_raw = compiled_clear["result"]  # type: str
+    ssc_raw: str = compiled_SSC["result"]
+    clear_raw: str = compiled_clear["result"]
+
     return ApplicationCreateTxn(
         sender,
         client.suggested_params(),
         OnComplete.NoOpOC,
         b64decode(ssc_raw),
         b64decode(clear_raw),
-        StateSchema(4, 1),
+        global_schema,
         StateSchema(0, 0),
-        foreign_assets=[primary_asset_id, secondary_asset_id],
+        foreign_assets=[
+            format_data['primary_asset_id'],
+            format_data['secondary_asset_id'],
+        ],
+        extra_pages=1,
     )
 
 
 @click.command()
+@click.option(
+    "--contract-type",
+    type=click.Choice(['constant_product', 'stableswap']),
+    prompt="Contract type",
+)
 @click.option(
     "--primary_asset_id",
     default=0,
@@ -86,10 +91,55 @@ def get_exchange_contract_txn(primary_asset_id, secondary_asset_id, fee_bps):
     prompt="Fee bps",
     help="Fee in basis points taken from the outcome of each swap.",
 )
-def deploy_exchange_contract(primary_asset_id, secondary_asset_id, fee_bps):
+@click.option(
+    "--pact_fee_bps",
+    type=int,
+    default=30,
+    prompt="Pact Fee bps",
+    help="Pact fee in basis points taken from the outcome of each swap. (stableswap only)",
+)
+@click.option(
+    "--amplifier",
+    type=int,
+    default=1000,
+    prompt="Amplifier",
+    help="Stableswap amplifier. (stableswap only)",
+)
+@click.option(
+    "--admin_and_treasury_address",
+    type=str,
+    default='',
+    prompt="Admin and treasury address",
+    help="Stableswap admin and treasury address. (stableswap only)",
+)
+def deploy_contract(
+    contract_type: str,
+    primary_asset_id: int,
+    secondary_asset_id: int,
+    fee_bps: int,
+    pact_fee_bps: int,
+    amplifier: int,
+    admin_and_treasury_address: str,
+):
     print("EC deployment begins")
-    contract_txn = get_exchange_contract_txn(
-        primary_asset_id, secondary_asset_id, fee_bps
+
+    if contract_type == 'constant_product':
+        teal_version = 5
+        global_schema = StateSchema(4, 1)
+    else:
+        teal_version = 6
+        global_schema = StateSchema(12, 4)
+
+    contract_txn = get_contract_txn(
+        contract_type=contract_type,
+        global_schema=global_schema,
+        teal_version=teal_version,
+        primary_asset_id=primary_asset_id,
+        secondary_asset_id=secondary_asset_id,
+        fee_bps=fee_bps,
+        pact_fee_bps=pact_fee_bps,
+        initial_A=amplifier,
+        admin_and_treasury_address=admin_and_treasury_address,
     )
 
     print("Deploying EC...")
@@ -146,4 +196,4 @@ def deploy_exchange_contract(primary_asset_id, secondary_asset_id, fee_bps):
 
 
 if __name__ == "__main__":
-    deploy_exchange_contract()
+    deploy_contract()
