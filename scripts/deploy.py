@@ -128,7 +128,7 @@ def deploy_contract(
         global_schema = StateSchema(4, 1)
     else:
         teal_version = 6
-        global_schema = StateSchema(12, 4)
+        global_schema = StateSchema(13, 4)
 
     contract_txn = get_contract_txn(
         contract_type=contract_type,
