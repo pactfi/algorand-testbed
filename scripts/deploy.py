@@ -37,12 +37,12 @@ class ACTION:
     CREATE_LIQUIDITY_TOKEN = "CLT"
     OPT_IN_TO_ASSETS = "OPTIN"  # contract opt-in to assets
 
-def get_contract_txn(contract_type: str, global_schema, teal_version: int, **format_data):
+def get_contract_txn(contract_type: str, global_schema, **format_data):
     sender = DEPLOYER_ADDRESS
     path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
-    clear_teal = f"#pragma version {teal_version}\nint 1"
+    clear_teal = "#pragma version 6\nint 1"
     # compile contracts to bytecode
     compiled_clear = client.compile(clear_teal)
     compiled_SSC = client.compile(ssc_teal)
@@ -124,16 +124,13 @@ def deploy_contract(
     print("EC deployment begins")
 
     if contract_type == 'constant_product':
-        teal_version = 5
-        global_schema = StateSchema(4, 1)
+        global_schema = StateSchema(9, 4)
     else:
-        teal_version = 6
         global_schema = StateSchema(13, 4)
 
     contract_txn = get_contract_txn(
         contract_type=contract_type,
         global_schema=global_schema,
-        teal_version=teal_version,
         primary_asset_id=primary_asset_id,
         secondary_asset_id=secondary_asset_id,
         fee_bps=fee_bps,
