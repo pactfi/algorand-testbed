@@ -37,12 +37,16 @@ class ACTION:
     CREATE_LIQUIDITY_TOKEN = "CLT"
     OPT_IN_TO_ASSETS = "OPTIN"  # contract opt-in to assets
 
-def get_contract_txn(contract_type: str, global_schema, **format_data):
+
+def get_contract_txn(
+    contract_type: str, global_schema, teal_version: int, version: int, **format_data
+):
     sender = DEPLOYER_ADDRESS
+    contract_type = contract_type if version else contract_type + "_v_0"
     path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
-    clear_teal = "#pragma version 6\nint 1"
+    clear_teal = f"#pragma version {teal_version}\nint 1"
     # compile contracts to bytecode
     compiled_clear = client.compile(clear_teal)
     compiled_SSC = client.compile(ssc_teal)
@@ -92,6 +96,13 @@ def get_contract_txn(contract_type: str, global_schema, **format_data):
     help="Fee in basis points taken from the outcome of each swap.",
 )
 @click.option(
+    "--version",
+    type=int,
+    default=1,
+    prompt="Version",
+    help="Smart contract version",
+)
+@click.option(
     "--pact_fee_bps",
     type=int,
     default=30,
@@ -108,7 +119,7 @@ def get_contract_txn(contract_type: str, global_schema, **format_data):
 @click.option(
     "--admin_and_treasury_address",
     type=str,
-    default='',
+    default="",
     prompt="Admin and treasury address",
     help="Stableswap admin and treasury address. (stableswap only)",
 )
@@ -117,20 +128,23 @@ def deploy_contract(
     primary_asset_id: int,
     secondary_asset_id: int,
     fee_bps: int,
+    version: int,
     pact_fee_bps: int,
     amplifier: int,
     admin_and_treasury_address: str,
 ):
     print("EC deployment begins")
-
+    teal_version = 6 if version else 5
     if contract_type == 'constant_product':
-        global_schema = StateSchema(9, 4)
+        global_schema = StateSchema(9, 4) if version else StateSchema(4, 1)
     else:
         global_schema = StateSchema(13, 4)
 
     contract_txn = get_contract_txn(
         contract_type=contract_type,
         global_schema=global_schema,
+        teal_version=teal_version,
+        version=version,
         primary_asset_id=primary_asset_id,
         secondary_asset_id=secondary_asset_id,
         fee_bps=fee_bps,
