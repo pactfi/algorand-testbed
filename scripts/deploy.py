@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 from base64 import b64decode
+from typing import Union
 
 import algosdk
 import click
@@ -37,12 +38,20 @@ class ACTION:
     CREATE_LIQUIDITY_TOKEN = "CLT"
     OPT_IN_TO_ASSETS = "OPTIN"  # contract opt-in to assets
 
-def get_contract_txn(contract_type: str, global_schema, **format_data):
+
+def get_contract_txn(
+    contract_type: str, global_schema, teal_version: int, version: int, **format_data
+):
     sender = DEPLOYER_ADDRESS
+    contract_type = (
+        contract_type + "_v_1"
+        if (version == 1 and contract_type == "constant_product")
+        else contract_type
+    )
     path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
-    clear_teal = "#pragma version 6\nint 1"
+    clear_teal = f"#pragma version {teal_version}\nint 1"
     # compile contracts to bytecode
     compiled_clear = client.compile(clear_teal)
     compiled_SSC = client.compile(ssc_teal)
@@ -59,8 +68,8 @@ def get_contract_txn(contract_type: str, global_schema, **format_data):
         global_schema,
         StateSchema(0, 0),
         foreign_assets=[
-            format_data['primary_asset_id'],
-            format_data['secondary_asset_id'],
+            format_data["primary_asset_id"],
+            format_data["secondary_asset_id"],
         ],
         extra_pages=1,
     )
@@ -69,7 +78,7 @@ def get_contract_txn(contract_type: str, global_schema, **format_data):
 @click.command()
 @click.option(
     "--contract-type",
-    type=click.Choice(['constant_product', 'stableswap']),
+    type=click.Choice(["constant_product", "stableswap"]),
     prompt="Contract type",
 )
 @click.option(
@@ -108,29 +117,44 @@ def get_contract_txn(contract_type: str, global_schema, **format_data):
 @click.option(
     "--admin_and_treasury_address",
     type=str,
-    default='',
+    default="",
     prompt="Admin and treasury address",
     help="Stableswap admin and treasury address. (stableswap only)",
+)
+@click.option(
+    "--version",
+    type=int,
+    default=None,
+    prompt=False,
+    help="Smart contract version",
 )
 def deploy_contract(
     contract_type: str,
     primary_asset_id: int,
     secondary_asset_id: int,
     fee_bps: int,
+    version: Union[int, None],
     pact_fee_bps: int,
     amplifier: int,
     admin_and_treasury_address: str,
 ):
+
     print("EC deployment begins")
 
-    if contract_type == 'constant_product':
-        global_schema = StateSchema(9, 4)
-    else:
-        global_schema = StateSchema(13, 4)
+    contract_dict = {
+        ("constant_product", None): (StateSchema(9, 4), 6),
+        ("constant_product", 2): (StateSchema(9, 4), 6),
+        ("constant_product", 1): (StateSchema(4, 1), 5),
+        ("stableswap", 1): (StateSchema(13, 4), 6),
+        ("stableswap", None): (StateSchema(13, 4), 6),
+    }
 
+    global_schema, teal_version = contract_dict[(contract_type, version)]
     contract_txn = get_contract_txn(
         contract_type=contract_type,
         global_schema=global_schema,
+        teal_version=teal_version,
+        version=version,
         primary_asset_id=primary_asset_id,
         secondary_asset_id=secondary_asset_id,
         fee_bps=fee_bps,
