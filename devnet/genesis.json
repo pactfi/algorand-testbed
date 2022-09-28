@@ -4,7 +4,7 @@
       "addr": "7777777777777777777777777777777777777777777777777774MSJUVU",
       "comment": "RewardsPool",
       "state": {
-        "algo": 125000000000000,
+        "algo": 1,
         "onl": 2
       }
     },
@@ -12,7 +12,7 @@
       "addr": "A7NMWS3NT3IUDMLVO26ULGXGIIOUQ3ND2TXSER6EBGRZNOBOUIQXHIBGDE",
       "comment": "FeeSink",
       "state": {
-        "algo": 100000,
+        "algo": 0,
         "onl": 2
       }
     },

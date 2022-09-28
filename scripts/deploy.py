@@ -48,7 +48,7 @@ def get_contract_txn(
         if (version == 1 and contract_type == "constant_product")
         else contract_type
     )
-    path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
+    path = pathlib.Path(__file__).parent.parent / "contracts" / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
     clear_teal = f"#pragma version {teal_version}\nint 1"
@@ -75,7 +75,12 @@ def get_contract_txn(
     )
 
 
-@click.command()
+@click.group()
+def deploy_contract():
+    print("Contract deployment begins")
+
+
+@deploy_contract.command()
 @click.option(
     "--contract-type",
     type=click.Choice(["constant_product", "stableswap"]),
@@ -128,7 +133,7 @@ def get_contract_txn(
     prompt=False,
     help="Smart contract version",
 )
-def deploy_contract(
+def exchange(
     contract_type: str,
     primary_asset_id: int,
     secondary_asset_id: int,
@@ -138,9 +143,6 @@ def deploy_contract(
     amplifier: int,
     admin_and_treasury_address: str,
 ):
-
-    print("EC deployment begins")
-
     contract_dict = {
         ("constant_product", None): (StateSchema(9, 4), 6),
         ("constant_product", 2): (StateSchema(9, 4), 6),
@@ -163,12 +165,12 @@ def deploy_contract(
         admin_and_treasury_address=admin_and_treasury_address,
     )
 
-    print("Deploying EC...")
+    print("Deploying app...")
     contract_txid = client.send_transaction(contract_txn.sign(DEPLOYER_PK))
     tx_info = wait_for_confirmation(client, contract_txid)
 
-    ec_id = tx_info["application-index"]
-    print("Deployed EC ID:", ec_id)
+    app_id = tx_info["application-index"]
+    print("Deployed APP ID:", app_id)
 
     print("Funding contract account...")
     # Fund contract account
@@ -181,7 +183,7 @@ def deploy_contract(
         PaymentTxn(
             DEPLOYER_ADDRESS,
             client.suggested_params(),
-            get_application_address(ec_id),
+            get_application_address(app_id),
             amt,
         ).sign(DEPLOYER_PK),
     )
@@ -194,7 +196,7 @@ def deploy_contract(
         ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
-            ec_id,
+            app_id,
             app_args=[ACTION.CREATE_LIQUIDITY_TOKEN],
             foreign_assets=[primary_asset_id, secondary_asset_id],
         ).sign(DEPLOYER_PK)
@@ -208,12 +210,35 @@ def deploy_contract(
         ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
-            ec_id,
+            app_id,
             app_args=[ACTION.OPT_IN_TO_ASSETS],
             foreign_assets=[primary_asset_id, secondary_asset_id],
         ).sign(DEPLOYER_PK)
     )
     wait_for_confirmation(client, txid)
+
+
+@deploy_contract.command()
+def staking():
+    approval = open("./contracts/compiled_staking", "rb").read()
+    clear = open("./contracts/clear_staking", "rb").read()
+
+    txid = client.send_transaction(
+        ApplicationCreateTxn(
+            DEPLOYER_ADDRESS,
+            client.suggested_params(),
+            OnComplete.NoOpOC,
+            approval,
+            clear,
+            global_schema=StateSchema(0, 5),
+            local_schema=StateSchema(0, 1),
+            extra_pages=3,
+        ).sign(DEPLOYER_PK)
+    )
+    res = wait_for_confirmation(client, txid)
+    app_id = res["application-index"]
+
+    print("Deployed APP ID:", app_id)
 
 
 if __name__ == "__main__":
