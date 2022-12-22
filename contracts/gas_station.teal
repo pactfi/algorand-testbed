@@ -1,0 +1,112 @@
+#pragma version 7
+intcblock 0 1
+bytecblock 0x078101
+txn NumAppArgs
+intc_0 // 0
+==
+bnz main_l6
+txna ApplicationArgs 0
+pushbytes 0xffde6378 // "increase_opcode_quota(uint64,uint64)void"
+==
+bnz main_l5
+txna ApplicationArgs 0
+pushbytes 0xb7355fd1 // "withdraw()void"
+==
+bnz main_l4
+err
+main_l4:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub withdraw_2
+intc_1 // 1
+return
+main_l5:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+store 0
+txna ApplicationArgs 2
+btoi
+store 1
+load 0
+load 1
+callsub increaseopcodequota_1
+intc_1 // 1
+return
+main_l6:
+txn OnCompletion
+intc_0 // NoOp
+==
+bnz main_l8
+err
+main_l8:
+txn ApplicationID
+intc_0 // 0
+==
+assert
+callsub create_0
+intc_1 // 1
+return
+
+// create
+create_0:
+intc_1 // 1
+return
+
+// increase_opcode_quota
+increaseopcodequota_1:
+store 2
+store 3
+increaseopcodequota_1_l1:
+load 3
+bz increaseopcodequota_1_l3
+itxn_begin
+pushint 6 // appl
+itxn_field TypeEnum
+pushint 5 // DeleteApplication
+itxn_field OnCompletion
+bytec_0 // base64(B4EB)
+itxn_field ApprovalProgram
+bytec_0 // base64(B4EB)
+itxn_field ClearStateProgram
+load 2
+itxn_field Fee
+itxn_submit
+load 3
+intc_1 // 1
+-
+store 3
+b increaseopcodequota_1_l1
+increaseopcodequota_1_l3:
+retsub
+
+// withdraw
+withdraw_2:
+itxn_begin
+intc_1 // pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Receiver
+global CurrentApplicationAddress
+balance
+global CurrentApplicationAddress
+min_balance
+-
+itxn_field Amount
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+retsub

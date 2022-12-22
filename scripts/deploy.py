@@ -16,6 +16,7 @@ from algosdk.future.transaction import (
 )
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
+from Cryptodome.Hash import SHA512
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 from scripts.common import send_and_wait, wait_for_confirmation
@@ -39,6 +40,17 @@ class ACTION:
     OPT_IN_TO_ASSETS = "OPTIN"  # contract opt-in to assets
 
 
+CONTRACTS_PATH = pathlib.Path(__file__).parent.parent / "contracts"
+
+MICRO_FARM_APPROVAL_COMPILED_B64 = "ByADAAEGJgEJTWFzdGVyQXBwMgkxABJEMRlAAH0xGEAAMjYaAIAEpg4KhxJEKDYaARfAMmexJLIQNhoCF8AyshiABLc1X9GyGjIJsiAisgGzQgBiNhoAgAQNhhxCEkSxJLIQKGSyGIAE+mtcoLIaIxayGiIWshojFrIaIhayGjIJshwyCLIyNhoCF8AwsjAyCbIgIrIBs0IAHDEZgQUSQAABADIJKGRhFESxI7IQIrIBMgmyILMjQw=="
+
+
+def get_selector(method_signature: str) -> bytes:
+    hash_ = SHA512.new(truncate="256")
+    hash_.update(method_signature.encode("utf-8"))
+    return hash_.digest()[:4]
+
+
 def get_contract_txn(
     contract_type: str, global_schema, teal_version: int, version: int, **format_data
 ):
@@ -48,10 +60,11 @@ def get_contract_txn(
         if (version == 1 and contract_type == "constant_product")
         else contract_type
     )
-    path = pathlib.Path(__file__).parent.parent / f"{contract_type}.teal"
+    path = CONTRACTS_PATH / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
     clear_teal = f"#pragma version {teal_version}\nint 1"
+
     # compile contracts to bytecode
     compiled_clear = client.compile(clear_teal)
     compiled_SSC = client.compile(ssc_teal)
@@ -75,7 +88,12 @@ def get_contract_txn(
     )
 
 
-@click.command()
+@click.group()
+def deploy_contract():
+    print("Contract deployment begins")
+
+
+@deploy_contract.command()
 @click.option(
     "--contract-type",
     type=click.Choice(["constant_product", "stableswap"]),
@@ -128,7 +146,7 @@ def get_contract_txn(
     prompt=False,
     help="Smart contract version",
 )
-def deploy_contract(
+def exchange(
     contract_type: str,
     primary_asset_id: int,
     secondary_asset_id: int,
@@ -138,9 +156,6 @@ def deploy_contract(
     amplifier: int,
     admin_and_treasury_address: str,
 ):
-
-    print("EC deployment begins")
-
     contract_dict = {
         ("constant_product", None): (StateSchema(9, 4), 6),
         ("constant_product", 2): (StateSchema(9, 4), 6),
@@ -154,7 +169,7 @@ def deploy_contract(
         contract_type=contract_type,
         global_schema=global_schema,
         teal_version=teal_version,
-        version=version,
+        version=version or 0,
         primary_asset_id=primary_asset_id,
         secondary_asset_id=secondary_asset_id,
         fee_bps=fee_bps,
@@ -163,12 +178,12 @@ def deploy_contract(
         admin_and_treasury_address=admin_and_treasury_address,
     )
 
-    print("Deploying EC...")
+    print("Deploying app...")
     contract_txid = client.send_transaction(contract_txn.sign(DEPLOYER_PK))
     tx_info = wait_for_confirmation(client, contract_txid)
 
-    ec_id = tx_info["application-index"]
-    print("Deployed EC ID:", ec_id)
+    app_id = tx_info["application-index"]
+    print("Deployed APP ID:", app_id)
 
     print("Funding contract account...")
     # Fund contract account
@@ -181,7 +196,7 @@ def deploy_contract(
         PaymentTxn(
             DEPLOYER_ADDRESS,
             client.suggested_params(),
-            get_application_address(ec_id),
+            get_application_address(app_id),
             amt,
         ).sign(DEPLOYER_PK),
     )
@@ -194,7 +209,7 @@ def deploy_contract(
         ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
-            ec_id,
+            app_id,
             app_args=[ACTION.CREATE_LIQUIDITY_TOKEN],
             foreign_assets=[primary_asset_id, secondary_asset_id],
         ).sign(DEPLOYER_PK)
@@ -208,12 +223,86 @@ def deploy_contract(
         ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
-            ec_id,
+            app_id,
             app_args=[ACTION.OPT_IN_TO_ASSETS],
             foreign_assets=[primary_asset_id, secondary_asset_id],
         ).sign(DEPLOYER_PK)
     )
     wait_for_confirmation(client, txid)
+
+
+@deploy_contract.command()
+def gas_station():
+    path = pathlib.Path(__file__).parent.parent / "contracts" / "gas_station.teal"
+    with open(path, "r") as file_:
+        ssc_teal = file_.read()
+    clear_teal = "#pragma version 7\npushint 0 // 0\nreturn"
+
+    compiled_clear = client.compile(clear_teal)
+    compiled_SSC = client.compile(ssc_teal)
+
+    ssc_raw: str = compiled_SSC["result"]
+    clear_raw: str = compiled_clear["result"]
+
+    create_app_tx = ApplicationCreateTxn(
+        sender=DEPLOYER_ADDRESS,
+        on_complete=OnComplete.NoOpOC,
+        approval_program=b64decode(ssc_raw),
+        clear_program=b64decode(clear_raw),
+        global_schema=StateSchema(0, 0),
+        local_schema=StateSchema(0, 0),
+        sp=client.suggested_params(),
+    )
+
+    txid = client.send_transaction(create_app_tx.sign(DEPLOYER_PK))
+    res = wait_for_confirmation(client, txid)
+    app_id = res["application-index"]
+
+    print("Deployed APP ID:", app_id)
+
+
+@deploy_contract.command()
+@click.option(
+    "--staked-asset-id",
+    type=int,
+    prompt="Staked asset id",
+)
+@click.option(
+    "--admin",
+    type=str,
+    prompt="Admin address",
+)
+def farm(staked_asset_id: int, admin: str):
+    path = CONTRACTS_PATH / "farm.teal"
+    with open(path, "r") as file_:
+        approval_teal = file_.read()
+        # Make the contract operate on blocks instead of seconds. Makes the testing easier by avoiding the need to wait some to time before the rewards accrue.
+        approval_teal = approval_teal.replace("LatestTimestamp", "Round")
+    clear_teal = "#pragma version 8\npushint 0 // 0\nreturn"
+
+    # compile contracts to bytecode
+    compiled_approval = b64decode(client.compile(approval_teal)["result"])
+    compiled_clear = b64decode(client.compile(clear_teal)["result"])
+
+    txid = client.send_transaction(
+        ApplicationCreateTxn(
+            sender=DEPLOYER_ADDRESS,
+            sp=client.suggested_params(),
+            on_complete=OnComplete.NoOpOC,
+            approval_program=compiled_approval,
+            clear_program=compiled_clear,
+            global_schema=StateSchema(7, 9),
+            local_schema=StateSchema(2, 4),
+            app_args=[get_selector("create(asset,account,account)void"), 0, 0, 0],
+            foreign_assets=[staked_asset_id],
+            accounts=[admin],
+            extra_pages=1,
+        ).sign(DEPLOYER_PK)
+    )
+    res = wait_for_confirmation(client, txid)
+    app_id = res["application-index"]
+
+    print("Deployed APP ID:", app_id)
 
 
 if __name__ == "__main__":
