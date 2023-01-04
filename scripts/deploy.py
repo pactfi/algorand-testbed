@@ -1,3 +1,4 @@
+import copy
 import os
 import pathlib
 import sys
@@ -7,13 +8,8 @@ from typing import Union
 import algosdk
 import click
 import dotenv
-from algosdk.future.transaction import (
-    ApplicationCreateTxn,
-    ApplicationNoOpTxn,
-    OnComplete,
-    PaymentTxn,
-    StateSchema,
-)
+from algosdk import abi
+from algosdk.future import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 from Cryptodome.Hash import SHA512
@@ -72,14 +68,14 @@ def get_contract_txn(
     ssc_raw: str = compiled_SSC["result"]
     clear_raw: str = compiled_clear["result"]
 
-    return ApplicationCreateTxn(
+    return transaction.ApplicationCreateTxn(
         sender,
         client.suggested_params(),
-        OnComplete.NoOpOC,
+        transaction.OnComplete.NoOpOC,
         b64decode(ssc_raw),
         b64decode(clear_raw),
         global_schema,
-        StateSchema(0, 0),
+        transaction.StateSchema(0, 0),
         foreign_assets=[
             format_data["primary_asset_id"],
             format_data["secondary_asset_id"],
@@ -157,11 +153,11 @@ def exchange(
     admin_and_treasury_address: str,
 ):
     contract_dict = {
-        ("constant_product", None): (StateSchema(9, 4), 6),
-        ("constant_product", 2): (StateSchema(9, 4), 6),
-        ("constant_product", 1): (StateSchema(4, 1), 5),
-        ("stableswap", 1): (StateSchema(13, 4), 6),
-        ("stableswap", None): (StateSchema(13, 4), 6),
+        ("constant_product", None): (transaction.StateSchema(9, 4), 6),
+        ("constant_product", 2): (transaction.StateSchema(9, 4), 6),
+        ("constant_product", 1): (transaction.StateSchema(4, 1), 5),
+        ("stableswap", 1): (transaction.StateSchema(13, 4), 6),
+        ("stableswap", None): (transaction.StateSchema(13, 4), 6),
     }
 
     global_schema, teal_version = contract_dict[(contract_type, version)]
@@ -193,7 +189,7 @@ def exchange(
         amt = 300000
     send_and_wait(
         client,
-        PaymentTxn(
+        transaction.PaymentTxn(
             DEPLOYER_ADDRESS,
             client.suggested_params(),
             get_application_address(app_id),
@@ -206,7 +202,7 @@ def exchange(
     sp_large.flat_fee = True
     sp_large.fee = 2000
     client.send_transaction(
-        ApplicationNoOpTxn(
+        transaction.ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
             app_id,
@@ -220,7 +216,7 @@ def exchange(
     sp_large.flat_fee = True
     sp_large.fee = 3000  # send fee enabling opting in maximally two assets
     txid = client.send_transaction(
-        ApplicationNoOpTxn(
+        transaction.ApplicationNoOpTxn(
             DEPLOYER_ADDRESS,
             sp_large,
             app_id,
@@ -244,13 +240,13 @@ def gas_station():
     ssc_raw: str = compiled_SSC["result"]
     clear_raw: str = compiled_clear["result"]
 
-    create_app_tx = ApplicationCreateTxn(
+    create_app_tx = transaction.ApplicationCreateTxn(
         sender=DEPLOYER_ADDRESS,
-        on_complete=OnComplete.NoOpOC,
+        on_complete=transaction.OnComplete.NoOpOC,
         approval_program=b64decode(ssc_raw),
         clear_program=b64decode(clear_raw),
-        global_schema=StateSchema(0, 0),
-        local_schema=StateSchema(0, 0),
+        global_schema=transaction.StateSchema(0, 0),
+        local_schema=transaction.StateSchema(0, 0),
         sp=client.suggested_params(),
     )
 
@@ -268,11 +264,16 @@ def gas_station():
     prompt="Staked asset id",
 )
 @click.option(
+    "--gas-station-id",
+    type=int,
+    prompt="Gas station app id",
+)
+@click.option(
     "--admin",
     type=str,
     prompt="Admin address",
 )
-def farm(staked_asset_id: int, admin: str):
+def farm(staked_asset_id: int, gas_station_id: int, admin: str):
     path = CONTRACTS_PATH / "farm.teal"
     with open(path, "r") as file_:
         approval_teal = file_.read()
@@ -284,25 +285,53 @@ def farm(staked_asset_id: int, admin: str):
     compiled_approval = b64decode(client.compile(approval_teal)["result"])
     compiled_clear = b64decode(client.compile(clear_teal)["result"])
 
-    txid = client.send_transaction(
-        ApplicationCreateTxn(
-            sender=DEPLOYER_ADDRESS,
-            sp=client.suggested_params(),
-            on_complete=OnComplete.NoOpOC,
-            approval_program=compiled_approval,
-            clear_program=compiled_clear,
-            global_schema=StateSchema(7, 9),
-            local_schema=StateSchema(2, 4),
-            app_args=[get_selector("create(asset,account,account)void"), 0, 0, 0],
-            foreign_assets=[staked_asset_id],
-            accounts=[admin],
-            extra_pages=1,
-        ).sign(DEPLOYER_PK)
+    suggested_params = client.suggested_params()
+
+    ESCROW_LEN = 346
+    BOX_COST = 2500 + 400 * (ESCROW_LEN + len("Escrow"))
+    fund_tx = transaction.PaymentTxn(
+        sender=DEPLOYER_ADDRESS,
+        receiver=algosdk.logic.get_application_address(gas_station_id),
+        amt=100_000 + BOX_COST,
+        sp=suggested_params,
     )
-    res = wait_for_confirmation(client, txid)
+
+    create_tx = transaction.ApplicationCreateTxn(
+        sender=DEPLOYER_ADDRESS,
+        sp=sp_fee(suggested_params, 3000),
+        on_complete=transaction.OnComplete.NoOpOC,
+        approval_program=compiled_approval,
+        clear_program=compiled_clear,
+        global_schema=transaction.StateSchema(7, 9),
+        local_schema=transaction.StateSchema(2, 4),
+        foreign_assets=[staked_asset_id],
+        foreign_apps=[gas_station_id],
+        accounts=[admin],
+        boxes=[(0, "Escrow")],
+        app_args=[
+            get_selector("create(application,asset,account,account)void"),
+            abi.UintType(8).encode(1),
+            0,
+            0,
+            0,
+        ],
+        extra_pages=1,
+    )
+
+    txs = transaction.assign_group_id([fund_tx, create_tx])
+    client.send_transactions(tx.sign(DEPLOYER_PK) for tx in txs)
+
+    res = wait_for_confirmation(client, txs[-1].get_txid())
     app_id = res["application-index"]
 
     print("Deployed APP ID:", app_id)
+
+
+def sp_fee(sp: transaction.SuggestedParams, fee: int) -> transaction.SuggestedParams:
+    sp = copy.copy(sp)
+    sp.flat_fee = True
+    sp.fee = fee
+    return sp
 
 
 if __name__ == "__main__":

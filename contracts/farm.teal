@@ -1,63 +1,55 @@
 #pragma version 8
-intcblock 0 8 1 80 18446744073709551615
-bytecblock 0x5374616b6564 0x525054 0x4475726174696f6e 0x5250545f66726163 0x546f74616c5374616b6564 0x4e756d5374616b657273 0x4163637275656452657761726473 0x4e6578744475726174696f6e 0x50656e64696e6752657761726473 0x436c61696d656452657761726473 0x41646d696e 0x4e65787452657761726473 0x55706461746572 0x546f74616c52657761726473 0x5265776172644173736574494473 0x557064617465644174 0x 0x5374616b656441737365744944 0x4d6963726f4661726d4944
+intcblock 0 8 1 48
+bytecblock 0x4475726174696f6e 0x525054 0x5250545f66726163 0x546f74616c52657761726473 0x50656e64696e6752657761726473 0x546f74616c5374616b6564 0x4e756d5374616b657273 0x4e6578744475726174696f6e 0x5265776172644173736574494473 0x5374616b6564 0x4163637275656452657761726473 0x4e65787452657761726473 0x41646d696e 0x436c61696d656452657761726473 0x557064617465644174 0x55706461746572 0x0820040001040626030b4d617374657241707049440101010032093100124431194000f23118400045361a00800438881a71124428361a0117c03267b125b210361a0217c032b2188004b7355fd1b21a22b201b3b124b210320ab21422b212361a0317c030b21122b201b34200d5361a00800478822cf01240004e361a008004b758d8d112400029361a0080049be4281b1240000100b123b210361a0117c01cb20722b201361a02570200b205b3420092b123b2103209b207320a60320a7809b20822b201b342007ab124b2103209b214361a0217b212361a0117c030b21122b201b3b125b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0117c030b23022b201b342002d31198105124000010032092864611444b124b210363000b2113209b21522b201b3b123b2103209b20922b201b32343 0x4d6963726f4661726d4944 0x 0x5374616b656441737365744944
 txn NumAppArgs
 intc_0 // 0
 ==
-bnz main_l22
+bnz main_l24
 txna ApplicationArgs 0
-pushbytes 0xcd336c85 // "create(asset,account,account)void"
+pushbytes 0x2d60defb // "create(application,asset,account,account)void"
 ==
-bnz main_l21
+bnz main_l23
 txna ApplicationArgs 0
 pushbytes 0xfd68a3bf // "change_updater(account)void"
 ==
-bnz main_l20
+bnz main_l22
 txna ApplicationArgs 0
 pushbytes 0x8f0d7d8e // "change_admin(account)void"
 ==
-bnz main_l19
+bnz main_l21
 txna ApplicationArgs 0
 pushbytes 0x948cf580 // "add_reward_asset(asset)void"
 ==
-bnz main_l18
+bnz main_l20
 txna ApplicationArgs 0
 pushbytes 0x6fe81b9b // "deposit_rewards(uint64[],uint64)void"
 ==
+bnz main_l19
+txna ApplicationArgs 0
+pushbytes 0x6161ca6e // "move_to_next_rewards()void"
+==
+bnz main_l18
+txna ApplicationArgs 0
+pushbytes 0x359e8255 // "update_global_state()void"
+==
 bnz main_l17
 txna ApplicationArgs 0
-pushbytes 0xc3140ae7 // "update_state(application,account,account,asset)void"
+pushbytes 0xa21edb24 // "update_global_state_current(uint64)void"
 ==
 bnz main_l16
 txna ApplicationArgs 0
-pushbytes 0x4a67d280 // "update_user_rpt(application)void"
+pushbytes 0xc3140ae7 // "update_state(application,account,account,asset)void"
 ==
 bnz main_l15
 txna ApplicationArgs 0
-pushbytes 0xcff3028e // "update_user_accrued_rewards(application)void"
+pushbytes 0x4aaea3f2 // "claim_rewards(account,uint64[])void"
 ==
 bnz main_l14
 txna ApplicationArgs 0
-pushbytes 0x4aaea3f2 // "claim_rewards(account,uint64[])void"
-==
-bnz main_l13
-txna ApplicationArgs 0
 pushbytes 0x199dbb11 // "exit_farm()void"
 ==
-bnz main_l12
+bnz main_l13
 err
-main_l12:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-callsub exitfarm_22
-intc_2 // 1
-return
 main_l13:
 txn OnCompletion
 intc_0 // NoOp
@@ -67,15 +59,7 @@ intc_0 // 0
 !=
 &&
 assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 10
-txna ApplicationArgs 2
-store 11
-load 10
-load 11
-callsub claimrewards_21
+callsub exitfarm_23
 intc_2 // 1
 return
 main_l14:
@@ -90,7 +74,12 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub updateuseraccruedrewards_20
+store 16
+txna ApplicationArgs 2
+store 17
+load 16
+load 17
+callsub claimrewards_22
 intc_2 // 1
 return
 main_l15:
@@ -105,7 +94,24 @@ assert
 txna ApplicationArgs 1
 intc_0 // 0
 getbyte
-callsub updateuserrpt_19
+store 12
+txna ApplicationArgs 2
+intc_0 // 0
+getbyte
+store 13
+txna ApplicationArgs 3
+intc_0 // 0
+getbyte
+store 14
+txna ApplicationArgs 4
+intc_0 // 0
+getbyte
+store 15
+load 12
+load 13
+load 14
+load 15
+callsub updatestate_21
 intc_2 // 1
 return
 main_l16:
@@ -115,6 +121,108 @@ intc_0 // NoOp
 txn ApplicationID
 intc_0 // 0
 !=
+&&
+assert
+txna ApplicationArgs 1
+btoi
+callsub updateglobalstatecurrent_20
+intc_2 // 1
+return
+main_l17:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub updateglobalstate_19
+intc_2 // 1
+return
+main_l18:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+callsub movetonextrewards_18
+intc_2 // 1
+return
+main_l19:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+store 10
+txna ApplicationArgs 2
+btoi
+store 11
+load 10
+load 11
+callsub depositrewards_17
+intc_2 // 1
+return
+main_l20:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+callsub addrewardasset_16
+intc_2 // 1
+return
+main_l21:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+callsub changeadmin_15
+intc_2 // 1
+return
+main_l22:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+intc_0 // 0
+getbyte
+callsub changeupdater_14
+intc_2 // 1
+return
+main_l23:
+txn OnCompletion
+intc_0 // NoOp
+==
+txn ApplicationID
+intc_0 // 0
+==
 &&
 assert
 txna ApplicationArgs 1
@@ -137,115 +245,24 @@ load 6
 load 7
 load 8
 load 9
-callsub updatestate_17
+callsub create_13
 intc_2 // 1
 return
-main_l17:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-store 4
-txna ApplicationArgs 2
-btoi
-store 5
-load 4
-load 5
-callsub depositrewards_16
-intc_2 // 1
-return
-main_l18:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub addrewardasset_15
-intc_2 // 1
-return
-main_l19:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub changeadmin_14
-intc_2 // 1
-return
-main_l20:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-!=
-&&
-assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-callsub changeupdater_13
-intc_2 // 1
-return
-main_l21:
-txn OnCompletion
-intc_0 // NoOp
-==
-txn ApplicationID
-intc_0 // 0
-==
-&&
-assert
-txna ApplicationArgs 1
-intc_0 // 0
-getbyte
-store 1
-txna ApplicationArgs 2
-intc_0 // 0
-getbyte
-store 2
-txna ApplicationArgs 3
-intc_0 // 0
-getbyte
-store 3
-load 1
-load 2
-load 3
-callsub create_12
-intc_2 // 1
-return
-main_l22:
+main_l24:
 txn OnCompletion
 intc_2 // OptIn
 ==
-bnz main_l28
+bnz main_l30
 txn OnCompletion
 pushint 2 // CloseOut
 ==
-bnz main_l27
+bnz main_l29
 txn OnCompletion
 pushint 4 // UpdateApplication
 ==
-bnz main_l26
+bnz main_l28
 err
-main_l26:
+main_l28:
 txn ApplicationID
 intc_0 // 0
 !=
@@ -253,7 +270,7 @@ assert
 callsub update_5
 intc_2 // 1
 return
-main_l27:
+main_l29:
 txn ApplicationID
 intc_0 // 0
 !=
@@ -261,7 +278,7 @@ assert
 callsub closeout_7
 intc_2 // 1
 return
-main_l28:
+main_l30:
 txn ApplicationID
 intc_0 // 0
 !=
@@ -272,17 +289,17 @@ return
 
 // SendToAddress
 SendToAddress_0:
-store 129
-store 128
-store 127
-load 128
+store 181
+store 180
+store 179
+load 180
 bnz SendToAddress_0_l2
 itxn_begin
 intc_2 // pay
 itxn_field TypeEnum
-load 127
+load 179
 itxn_field Receiver
-load 129
+load 181
 itxn_field Amount
 intc_0 // 0
 itxn_field Fee
@@ -292,11 +309,11 @@ SendToAddress_0_l2:
 itxn_begin
 pushint 4 // axfer
 itxn_field TypeEnum
-load 127
+load 179
 itxn_field AssetReceiver
-load 129
+load 181
 itxn_field AssetAmount
-load 128
+load 180
 itxn_field XferAsset
 intc_0 // 0
 itxn_field Fee
@@ -306,47 +323,47 @@ retsub
 
 // get_deposited_amount
 getdepositedamount_1:
-store 31
-load 31
+store 40
+load 40
 gtxns TypeEnum
 intc_2 // pay
 ==
 bnz getdepositedamount_1_l2
-load 31
+load 40
 gtxns AssetAmount
 b getdepositedamount_1_l3
 getdepositedamount_1_l2:
-load 31
+load 40
 gtxns Amount
 getdepositedamount_1_l3:
 retsub
 
 // exists
 exists_2:
-store 21
-store 23
+store 30
+store 32
 intc_0 // 0
-store 22
+store 31
 exists_2_l1:
-load 22
-load 23
+load 31
+load 32
 len
 intc_1 // 8
 /
 <
 bz exists_2_l5
-load 23
-load 22
+load 32
+load 31
 intc_1 // 8
 *
 extract_uint64
-load 21
+load 30
 ==
 bnz exists_2_l4
-load 22
+load 31
 intc_2 // 1
 +
-store 22
+store 31
 b exists_2_l1
 exists_2_l4:
 intc_2 // 1
@@ -357,66 +374,66 @@ retsub
 
 // validate_transfer
 validatetransfer_3:
-store 35
-store 34
-store 33
-store 32
-load 33
+store 44
+store 43
+store 42
+store 41
+load 42
 bnz validatetransfer_3_l2
-load 32
+load 41
 gtxns TypeEnum
 intc_2 // pay
 ==
-load 32
+load 41
 gtxns RekeyTo
 global ZeroAddress
 ==
 &&
-load 32
+load 41
 gtxns CloseRemainderTo
 global ZeroAddress
 ==
 &&
-load 32
+load 41
 gtxns Receiver
-load 34
+load 43
 ==
 &&
-load 32
+load 41
 gtxns Sender
-load 35
+load 44
 ==
 &&
 assert
 b validatetransfer_3_l3
 validatetransfer_3_l2:
-load 32
+load 41
 gtxns TypeEnum
 pushint 4 // axfer
 ==
-load 32
+load 41
 gtxns RekeyTo
 global ZeroAddress
 ==
 &&
-load 32
+load 41
 gtxns AssetCloseTo
 global ZeroAddress
 ==
 &&
-load 32
+load 41
 gtxns XferAsset
-load 33
+load 42
 ==
 &&
-load 32
+load 41
 gtxns AssetReceiver
-load 34
+load 43
 ==
 &&
-load 32
+load 41
 gtxns Sender
-load 35
+load 44
 ==
 &&
 assert
@@ -425,7 +442,7 @@ retsub
 
 // auth_only
 authonly_4:
-bytec 12 // "Updater"
+bytec 15 // "Updater"
 app_global_get
 ==
 retsub
@@ -443,27 +460,27 @@ optin_6:
 txn GroupIndex
 intc_2 // 1
 -
-store 0
-load 0
+store 1
+load 1
 gtxns TypeEnum
 pushint 6 // appl
 ==
-load 0
+load 1
 gtxns ApplicationID
 intc_0 // 0
 ==
 &&
-load 0
+load 1
 gtxns OnCompletion
 intc_0 // NoOp
 ==
 &&
-load 0
+load 1
 gtxns ApprovalProgram
-pushbytes 0x08200300060126030b4d6173746572417070494401010100320931001244311940008a3118400043361a00800438881a71124428361a0117c03267b123b210361a0217c032b2188004b7355fd1b21a22b201b3b18104b210320ab214361a0317c030b21122b201b342005e361a0080040d861c421244b123b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0217c030b2303209b22022b201b342001c31198105124000010032092864611444b124b21022b2013209b220b32443 // 0x08200300060126030b4d6173746572417070494401010100320931001244311940008a3118400043361a00800438881a71124428361a0117c03267b123b210361a0217c032b2188004b7355fd1b21a22b201b3b18104b210320ab214361a0317c030b21122b201b342005e361a0080040d861c421244b123b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0217c030b2303209b22022b201b342001c31198105124000010032092864611444b124b21022b2013209b220b32443
+bytec 16 // 0x0820040001040626030b4d617374657241707049440101010032093100124431194000f23118400045361a00800438881a71124428361a0117c03267b125b210361a0217c032b2188004b7355fd1b21a22b201b3b124b210320ab21422b212361a0317c030b21122b201b34200d5361a00800478822cf01240004e361a008004b758d8d112400029361a0080049be4281b1240000100b123b210361a0117c01cb20722b201361a02570200b205b3420092b123b2103209b207320a60320a7809b20822b201b342007ab124b2103209b214361a0217b212361a0117c030b21122b201b3b125b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0117c030b23022b201b342002d31198105124000010032092864611444b124b210363000b2113209b21522b201b3b123b2103209b20922b201b32343
 ==
 &&
-load 0
+load 1
 gtxns Sender
 txn Sender
 ==
@@ -471,36 +488,36 @@ txn Sender
 // Previous transaction must be a MicroFarm creation
 assert
 txn Sender
-bytec_0 // "Staked"
+bytec 9 // "Staked"
 intc_0 // 0
 app_local_put
 txn Sender
-bytec 18 // "MicroFarmID"
+bytec 17 // "MicroFarmID"
 intc_0 // 0
 app_local_put
 txn Sender
 bytec_1 // "RPT"
-intc_3 // 80
+intc_3 // 48
 bzero
 app_local_put
 txn Sender
-bytec_3 // "RPT_frac"
-intc_3 // 80
+bytec_2 // "RPT_frac"
+intc_3 // 48
 bzero
 app_local_put
 txn Sender
-bytec 9 // "ClaimedRewards"
-intc_3 // 80
+bytec 13 // "ClaimedRewards"
+intc_3 // 48
 bzero
 app_local_put
 txn Sender
-bytec 6 // "AccruedRewards"
-intc_3 // 80
+bytec 10 // "AccruedRewards"
+intc_3 // 48
 bzero
 app_local_put
 txn Sender
-bytec 18 // "MicroFarmID"
-load 0
+bytec 17 // "MicroFarmID"
+load 1
 gtxns CreatedApplicationID
 app_local_put
 retsub
@@ -508,1623 +525,1775 @@ retsub
 // close_out
 closeout_7:
 txn Sender
-bytec_0 // "Staked"
+bytec 9 // "Staked"
 app_local_get
 intc_0 // 0
 ==
-intc_0 // 0
-&&
-bnz closeout_7_l3
+assert
 txn Sender
-bytec_0 // "Staked"
+bytec 10 // "AccruedRewards"
 app_local_get
-intc_0 // 0
-!=
-intc_0 // 0
-intc_0 // 0
+intc_3 // 48
+bzero
 ==
-&&
-bz closeout_7_l4
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
+assert
+txn Sender
+bytec 9 // "Staked"
+app_local_get
+store 4
+bytec 5 // "TotalStaked"
+bytec 5 // "TotalStaked"
 app_global_get
-intc_2 // 1
+load 4
 -
 app_global_put
-b closeout_7_l4
-closeout_7_l3:
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
+load 4
+intc_0 // 0
+callsub updatenumberofstakers_24
+bytec_3 // "TotalRewards"
 app_global_get
+store 2
+txn Sender
+bytec 10 // "AccruedRewards"
+app_local_get
+store 3
+intc_0 // 0
+store 5
+closeout_7_l1:
+load 5
+pushint 6 // 6
+<
+bz closeout_7_l3
+load 2
+load 5
+intc_1 // 8
+*
+load 2
+load 5
+intc_1 // 8
+*
+extract_uint64
+load 3
+load 5
+intc_1 // 8
+*
+extract_uint64
+-
+itob
+replace3
+store 2
+load 5
 intc_2 // 1
 +
+store 5
+b closeout_7_l1
+closeout_7_l3:
+bytec_3 // "TotalRewards"
+load 2
 app_global_put
-closeout_7_l4:
 intc_2 // 1
 return
 
 // auth_only
 authonly_8:
-bytec 12 // "Updater"
+bytec 15 // "Updater"
 app_global_get
 ==
 retsub
 
 // auth_only
 authonly_9:
-bytec 10 // "Admin"
+bytec 12 // "Admin"
 app_global_get
 ==
 retsub
 
 // auth_only
 authonly_10:
-bytec 10 // "Admin"
+bytec 12 // "Admin"
 app_global_get
 ==
 retsub
 
 // auth_only
 authonly_11:
-bytec 10 // "Admin"
+bytec 12 // "Admin"
 app_global_get
 ==
 retsub
 
+// validate_micro_farm
+validatemicrofarm_12:
+store 158
+store 157
+load 157
+app_params_get AppApprovalProgram
+store 160
+store 159
+load 157
+app_params_get AppCreator
+store 162
+store 161
+load 157
+txnas Applications
+pushbytes 0x4d61737465724170704944 // "MasterAppID"
+app_global_get_ex
+store 164
+store 163
+load 160
+load 159
+bytec 16 // 0x0820040001040626030b4d617374657241707049440101010032093100124431194000f23118400045361a00800438881a71124428361a0117c03267b125b210361a0217c032b2188004b7355fd1b21a22b201b3b124b210320ab21422b212361a0317c030b21122b201b34200d5361a00800478822cf01240004e361a008004b758d8d112400029361a0080049be4281b1240000100b123b210361a0117c01cb20722b201361a02570200b205b3420092b123b2103209b207320a60320a7809b20822b201b342007ab124b2103209b214361a0217b212361a0117c030b21122b201b3b125b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0117c030b23022b201b342002d31198105124000010032092864611444b124b210363000b2113209b21522b201b3b123b2103209b20922b201b32343
+==
+&&
+load 161
+load 158
+txnas Accounts
+==
+&&
+load 164
+&&
+load 163
+global CurrentApplicationID
+==
+&&
+load 158
+txnas Accounts
+bytec 17 // "MicroFarmID"
+app_local_get
+load 157
+txnas Applications
+==
+&&
+retsub
+
 // create
-create_12:
-store 14
-store 13
-store 12
-bytec 10 // "Admin"
-bytec 16 // ""
+create_13:
+store 23
+store 22
+store 21
+store 20
+bytec 12 // "Admin"
+bytec 18 // ""
 app_global_put
-bytec 12 // "Updater"
-bytec 16 // ""
+bytec 15 // "Updater"
+bytec 18 // ""
 app_global_put
-bytec 4 // "TotalStaked"
+bytec 5 // "TotalStaked"
 intc_0 // 0
 app_global_put
-bytec 15 // "UpdatedAt"
+bytec 14 // "UpdatedAt"
 global LatestTimestamp
 app_global_put
-bytec 5 // "NumStakers"
+bytec 6 // "NumStakers"
 intc_0 // 0
 app_global_put
 pushbytes 0x446570726563617465644174 // "DeprecatedAt"
 intc_0 // 0
 app_global_put
-bytec_2 // "Duration"
+bytec_0 // "Duration"
 intc_0 // 0
 app_global_put
 bytec 7 // "NextDuration"
 intc_0 // 0
 app_global_put
 bytec_1 // "RPT"
-intc_3 // 80
+intc_3 // 48
 bzero
 app_global_put
-bytec_3 // "RPT_frac"
-intc_3 // 80
+bytec_2 // "RPT_frac"
+intc_3 // 48
 bzero
 app_global_put
 bytec 11 // "NextRewards"
-intc_3 // 80
+intc_3 // 48
 bzero
 app_global_put
-bytec 8 // "PendingRewards"
-intc_3 // 80
+bytec 4 // "PendingRewards"
+intc_3 // 48
 bzero
 app_global_put
-bytec 13 // "TotalRewards"
-intc_3 // 80
+bytec_3 // "TotalRewards"
+intc_3 // 48
 bzero
 app_global_put
-bytec 9 // "ClaimedRewards"
-intc_3 // 80
+bytec 13 // "ClaimedRewards"
+intc_3 // 48
 bzero
 app_global_put
-bytec 14 // "RewardAssetIDs"
-bytec 16 // ""
+bytec 8 // "RewardAssetIDs"
+bytec 18 // ""
 app_global_put
 intc_0 // 0
-bytec 17 // "StakedAssetID"
+bytec 19 // "StakedAssetID"
 app_global_get_ex
-store 16
-store 15
-load 16
+store 25
+store 24
+load 25
 !
 assert
-bytec 17 // "StakedAssetID"
-load 12
+bytec 19 // "StakedAssetID"
+load 21
 txnas Assets
 app_global_put
-bytec 10 // "Admin"
-load 13
+bytec 12 // "Admin"
+load 22
 txnas Accounts
 app_global_put
-bytec 12 // "Updater"
-load 14
+bytec 15 // "Updater"
+load 23
 txnas Accounts
 app_global_put
+itxn_begin
+pushint 6 // appl
+itxn_field TypeEnum
+load 20
+txnas Applications
+itxn_field ApplicationID
+pushbytes 0xb7355fd1 // "withdraw()void"
+itxn_field ApplicationArgs
+intc_0 // 0
+itxn_field Fee
+itxn_submit
+pushbytes 0x457363726f77 // "Escrow"
+bytec 16 // 0x0820040001040626030b4d617374657241707049440101010032093100124431194000f23118400045361a00800438881a71124428361a0117c03267b125b210361a0217c032b2188004b7355fd1b21a22b201b3b124b210320ab21422b212361a0317c030b21122b201b34200d5361a00800478822cf01240004e361a008004b758d8d112400029361a0080049be4281b1240000100b123b210361a0117c01cb20722b201361a02570200b205b3420092b123b2103209b207320a60320a7809b20822b201b342007ab124b2103209b214361a0217b212361a0117c030b21122b201b3b125b2102864b2188004c3140ae7b21a29b21a2ab21a29b21a2ab21a3209b21c3208b232361a0117c030b23022b201b342002d31198105124000010032092864611444b124b210363000b2113209b21522b201b3b123b2103209b20922b201b32343
+box_put
 retsub
 
 // change_updater
-changeupdater_13:
-store 17
+changeupdater_14:
+store 26
 txn Sender
 callsub authonly_8
 // unauthorized
 assert
-bytec 12 // "Updater"
-load 17
+bytec 15 // "Updater"
+load 26
 txnas Accounts
 app_global_put
 retsub
 
 // change_admin
-changeadmin_14:
-store 18
+changeadmin_15:
+store 27
 txn Sender
 callsub authonly_9
 // unauthorized
 assert
-bytec 10 // "Admin"
-load 18
+bytec 12 // "Admin"
+load 27
 txnas Accounts
 app_global_put
 retsub
 
 // add_reward_asset
-addrewardasset_15:
-store 19
+addrewardasset_16:
+store 28
 txn Sender
 callsub authonly_10
 // unauthorized
 assert
-bytec 14 // "RewardAssetIDs"
+bytec 8 // "RewardAssetIDs"
 app_global_get
-store 20
-load 20
+store 29
+load 29
 len
 intc_1 // 8
 /
-pushint 10 // 10
+pushint 6 // 6
 <
 assert
-load 20
-load 19
+load 29
+load 28
 txnas Assets
 callsub exists_2
 !
 assert
-load 20
-load 19
+load 29
+load 28
 txnas Assets
 itob
 concat
-store 20
-bytec 14 // "RewardAssetIDs"
-load 20
+store 29
+bytec 8 // "RewardAssetIDs"
+load 29
 app_global_put
-load 19
+load 28
 txnas Assets
 intc_0 // 0
 !=
-bz addrewardasset_15_l2
+bz addrewardasset_16_l2
 itxn_begin
 pushint 4 // axfer
 itxn_field TypeEnum
 global CurrentApplicationAddress
 itxn_field AssetReceiver
-load 19
+load 28
 txnas Assets
 itxn_field XferAsset
 intc_0 // 0
 itxn_field Fee
 itxn_submit
-addrewardasset_15_l2:
+addrewardasset_16_l2:
 retsub
 
 // deposit_rewards
-depositrewards_16:
-store 25
-store 24
+depositrewards_17:
+store 34
+store 33
 txn Sender
 callsub authonly_11
 // unauthorized
 assert
-callsub updatefarmrewardparams_18
+bytec 14 // "UpdatedAt"
+app_global_get
+global LatestTimestamp
+==
+assert
 bytec 7 // "NextDuration"
 app_global_get
 intc_0 // 0
 ==
 assert
-load 24
+load 33
 intc_0 // 0
 extract_uint16
 assert
-bytec 14 // "RewardAssetIDs"
+load 34
+assert
+bytec 8 // "RewardAssetIDs"
 app_global_get
-store 29
+store 38
 intc_0 // 0
-store 26
-depositrewards_16_l1:
-load 26
-load 24
+store 35
+depositrewards_17_l1:
+load 35
+load 33
 intc_0 // 0
 extract_uint16
 <
-bnz depositrewards_16_l8
-intc_3 // 80
+bnz depositrewards_17_l8
+intc_3 // 48
 bzero
-store 30
+store 39
 intc_0 // 0
-store 26
-depositrewards_16_l3:
-load 26
-load 24
+store 35
+depositrewards_17_l3:
+load 35
+load 33
 intc_0 // 0
 extract_uint16
 <
-bnz depositrewards_16_l7
-bytec_2 // "Duration"
+bnz depositrewards_17_l7
+bytec_0 // "Duration"
 app_global_get
 intc_0 // 0
 ==
-bnz depositrewards_16_l6
+bnz depositrewards_17_l6
 bytec 11 // "NextRewards"
-load 30
+load 39
 app_global_put
 bytec 7 // "NextDuration"
-load 25
+load 34
 app_global_put
-b depositrewards_16_l9
-depositrewards_16_l6:
-bytec 8 // "PendingRewards"
-load 30
+b depositrewards_17_l9
+depositrewards_17_l6:
+bytec 4 // "PendingRewards"
+load 39
 app_global_put
-bytec_2 // "Duration"
-load 25
+bytec_0 // "Duration"
+load 34
 app_global_put
-b depositrewards_16_l9
-depositrewards_16_l7:
-load 24
+b depositrewards_17_l9
+depositrewards_17_l7:
+load 33
 intc_1 // 8
-load 26
+load 35
 *
 pushint 2 // 2
 +
 extract_uint64
-store 28
-load 30
-load 28
+store 37
+load 39
+load 37
 intc_1 // 8
 *
 txn GroupIndex
-load 24
+load 33
 intc_0 // 0
 extract_uint16
-store 27
-load 27
+store 36
+load 36
 -
-load 26
+load 35
 +
 callsub getdepositedamount_1
 itob
 replace3
-store 30
-load 26
+store 39
+load 35
 intc_2 // 1
 +
-store 26
-b depositrewards_16_l3
-depositrewards_16_l8:
-load 24
+store 35
+b depositrewards_17_l3
+depositrewards_17_l8:
+load 33
 intc_1 // 8
-load 26
+load 35
 *
 pushint 2 // 2
 +
 extract_uint64
-store 28
+store 37
 txn GroupIndex
-load 24
+load 33
 intc_0 // 0
 extract_uint16
-store 27
-load 27
+store 36
+load 36
 -
-load 26
+load 35
 +
-load 29
-load 28
+load 38
+load 37
 intc_1 // 8
 *
 extract_uint64
 global CurrentApplicationAddress
-global CreatorAddress
+bytec 12 // "Admin"
+app_global_get
 callsub validatetransfer_3
-load 26
+load 35
 intc_2 // 1
 +
-store 26
-b depositrewards_16_l1
-depositrewards_16_l9:
+store 35
+b depositrewards_17_l1
+depositrewards_17_l9:
+retsub
+
+// move_to_next_rewards
+movetonextrewards_18:
+bytec 4 // "PendingRewards"
+bytec 11 // "NextRewards"
+app_global_get
+app_global_put
+bytec_0 // "Duration"
+bytec 7 // "NextDuration"
+app_global_get
+app_global_put
+bytec 11 // "NextRewards"
+intc_3 // 48
+bzero
+app_global_put
+bytec 7 // "NextDuration"
+intc_0 // 0
+app_global_put
+retsub
+
+// update_global_state
+updateglobalstate_19:
+bytec 5 // "TotalStaked"
+app_global_get
+intc_0 // 0
+!=
+bytec_0 // "Duration"
+app_global_get
+intc_0 // 0
+!=
+&&
+bz updateglobalstate_19_l9
+global LatestTimestamp
+bytec 14 // "UpdatedAt"
+app_global_get
+-
+store 47
+bytec_0 // "Duration"
+app_global_get
+load 47
+dup2
+>
+select
+store 45
+bytec 7 // "NextDuration"
+app_global_get
+load 47
+load 45
+-
+dup2
+>
+select
+store 46
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+store 50
+bytec_0 // "Duration"
+app_global_get
+store 48
+bytec 5 // "TotalStaked"
+app_global_get
+store 49
+bytec_1 // "RPT"
+app_global_get
+store 51
+bytec_2 // "RPT_frac"
+app_global_get
+store 52
+bytec 4 // "PendingRewards"
+app_global_get
+store 53
+bytec_3 // "TotalRewards"
+app_global_get
+store 54
+intc_0 // 0
+store 55
+updateglobalstate_19_l2:
+load 55
+load 50
+<
+bnz updateglobalstate_19_l8
+bytec_0 // "Duration"
+bytec_0 // "Duration"
+app_global_get
+load 45
+-
+app_global_put
+bytec_1 // "RPT"
+load 51
+app_global_put
+bytec_2 // "RPT_frac"
+load 52
+app_global_put
+bytec 4 // "PendingRewards"
+load 53
+app_global_put
+bytec_3 // "TotalRewards"
+load 54
+app_global_put
+load 46
+bz updateglobalstate_19_l9
+bytec 4 // "PendingRewards"
+bytec 11 // "NextRewards"
+app_global_get
+app_global_put
+bytec_0 // "Duration"
+bytec 7 // "NextDuration"
+app_global_get
+app_global_put
+bytec 11 // "NextRewards"
+intc_3 // 48
+bzero
+app_global_put
+bytec 7 // "NextDuration"
+intc_0 // 0
+app_global_put
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+store 65
+bytec_0 // "Duration"
+app_global_get
+store 63
+bytec 5 // "TotalStaked"
+app_global_get
+store 64
+bytec_1 // "RPT"
+app_global_get
+store 66
+bytec_2 // "RPT_frac"
+app_global_get
+store 67
+bytec 4 // "PendingRewards"
+app_global_get
+store 68
+bytec_3 // "TotalRewards"
+app_global_get
+store 69
+intc_0 // 0
+store 70
+updateglobalstate_19_l5:
+load 70
+load 65
+<
+bnz updateglobalstate_19_l7
+bytec_0 // "Duration"
+bytec_0 // "Duration"
+app_global_get
+load 46
+-
+app_global_put
+bytec_1 // "RPT"
+load 66
+app_global_put
+bytec_2 // "RPT_frac"
+load 67
+app_global_put
+bytec 4 // "PendingRewards"
+load 68
+app_global_put
+bytec_3 // "TotalRewards"
+load 69
+app_global_put
+b updateglobalstate_19_l9
+updateglobalstate_19_l7:
+load 68
+load 70
+intc_1 // 8
+*
+extract_uint64
+store 71
+load 71
+load 46
+mulw
+intc_0 // 0
+load 63
+divmodw
+pop
+pop
+swap
+!
+assert
+store 74
+load 74
+load 64
+/
+store 75
+load 74
+load 64
+%
+intc_0 // 0
+load 64
+divw
+store 76
+load 67
+load 70
+intc_1 // 8
+*
+extract_uint64
+load 76
+addw
+store 73
+store 77
+load 66
+load 70
+intc_1 // 8
+*
+extract_uint64
+load 75
++
+load 77
++
+store 72
+load 66
+load 70
+intc_1 // 8
+*
+load 72
+itob
+replace3
+store 66
+load 67
+load 70
+intc_1 // 8
+*
+load 73
+itob
+replace3
+store 67
+load 68
+load 70
+intc_1 // 8
+*
+load 71
+load 74
+-
+itob
+replace3
+store 68
+load 69
+load 70
+intc_1 // 8
+*
+load 69
+load 70
+intc_1 // 8
+*
+extract_uint64
+load 74
++
+itob
+replace3
+store 69
+load 70
+intc_2 // 1
++
+store 70
+b updateglobalstate_19_l5
+updateglobalstate_19_l8:
+load 53
+load 55
+intc_1 // 8
+*
+extract_uint64
+store 56
+load 56
+load 45
+mulw
+intc_0 // 0
+load 48
+divmodw
+pop
+pop
+swap
+!
+assert
+store 59
+load 59
+load 49
+/
+store 60
+load 59
+load 49
+%
+intc_0 // 0
+load 49
+divw
+store 61
+load 52
+load 55
+intc_1 // 8
+*
+extract_uint64
+load 61
+addw
+store 58
+store 62
+load 51
+load 55
+intc_1 // 8
+*
+extract_uint64
+load 60
++
+load 62
++
+store 57
+load 51
+load 55
+intc_1 // 8
+*
+load 57
+itob
+replace3
+store 51
+load 52
+load 55
+intc_1 // 8
+*
+load 58
+itob
+replace3
+store 52
+load 53
+load 55
+intc_1 // 8
+*
+load 56
+load 59
+-
+itob
+replace3
+store 53
+load 54
+load 55
+intc_1 // 8
+*
+load 54
+load 55
+intc_1 // 8
+*
+extract_uint64
+load 59
++
+itob
+replace3
+store 54
+load 55
+intc_2 // 1
++
+store 55
+b updateglobalstate_19_l2
+updateglobalstate_19_l9:
+bytec 14 // "UpdatedAt"
+global LatestTimestamp
+app_global_put
+retsub
+
+// update_global_state_current
+updateglobalstatecurrent_20:
+store 78
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+store 81
+bytec_0 // "Duration"
+app_global_get
+store 79
+bytec 5 // "TotalStaked"
+app_global_get
+store 80
+bytec_1 // "RPT"
+app_global_get
+store 82
+bytec_2 // "RPT_frac"
+app_global_get
+store 83
+bytec 4 // "PendingRewards"
+app_global_get
+store 84
+bytec_3 // "TotalRewards"
+app_global_get
+store 85
+intc_0 // 0
+store 86
+updateglobalstatecurrent_20_l1:
+load 86
+load 81
+<
+bz updateglobalstatecurrent_20_l3
+load 84
+load 86
+intc_1 // 8
+*
+extract_uint64
+store 87
+load 87
+load 78
+mulw
+intc_0 // 0
+load 79
+divmodw
+pop
+pop
+swap
+!
+assert
+store 90
+load 90
+load 80
+/
+store 91
+load 90
+load 80
+%
+intc_0 // 0
+load 80
+divw
+store 92
+load 83
+load 86
+intc_1 // 8
+*
+extract_uint64
+load 92
+addw
+store 89
+store 93
+load 82
+load 86
+intc_1 // 8
+*
+extract_uint64
+load 91
++
+load 93
++
+store 88
+load 82
+load 86
+intc_1 // 8
+*
+load 88
+itob
+replace3
+store 82
+load 83
+load 86
+intc_1 // 8
+*
+load 89
+itob
+replace3
+store 83
+load 84
+load 86
+intc_1 // 8
+*
+load 87
+load 90
+-
+itob
+replace3
+store 84
+load 85
+load 86
+intc_1 // 8
+*
+load 85
+load 86
+intc_1 // 8
+*
+extract_uint64
+load 90
++
+itob
+replace3
+store 85
+load 86
+intc_2 // 1
++
+store 86
+b updateglobalstatecurrent_20_l1
+updateglobalstatecurrent_20_l3:
+bytec_0 // "Duration"
+bytec_0 // "Duration"
+app_global_get
+load 78
+-
+app_global_put
+bytec_1 // "RPT"
+load 82
+app_global_put
+bytec_2 // "RPT_frac"
+load 83
+app_global_put
+bytec 4 // "PendingRewards"
+load 84
+app_global_put
+bytec_3 // "TotalRewards"
+load 85
+app_global_put
 retsub
 
 // update_state
-updatestate_17:
-store 66
-store 65
-store 64
-store 63
-load 63
+updatestate_21:
+store 97
+store 96
+store 95
+store 94
+load 94
 app_params_get AppCreator
-store 68
-store 67
-load 68
-assert
-load 63
+store 99
+store 98
+load 94
 app_params_get AppAddress
-store 70
-store 69
-load 70
+store 101
+store 100
+load 99
 assert
-load 69
-load 64
+load 101
+assert
+load 100
+load 95
 txnas Accounts
 ==
 // balance and auth address must taken from app's account
 assert
-load 67
-intc_0 // 0
-bytec_0 // "Staked"
-app_local_get_ex
-store 72
-store 71
-load 72
-// creator is not opted in
-assert
-callsub updatefarmrewardparams_18
-load 63
-app_params_get AppCreator
-store 74
-store 73
-load 74
-assert
-load 73
-bytec_1 // "RPT"
-app_local_get
-intc_3 // 80
-bzero
-==
-load 73
-bytec_0 // "Staked"
-app_local_get
-intc_0 // 0
-==
-&&
-!
-bnz updatestate_17_l8
-updatestate_17_l1:
-load 73
-bytec_1 // "RPT"
-bytec_1 // "RPT"
-app_global_get
-app_local_put
-load 73
-bytec_3 // "RPT_frac"
-bytec_3 // "RPT_frac"
-app_global_get
-app_local_put
-load 64
-acct_params_get AcctAuthAddr
-store 87
-store 86
-load 87
-assert
-load 64
-bytec 17 // "StakedAssetID"
-app_global_get
-asset_holding_get AssetBalance
-store 89
-store 88
-load 89
-assert
-bytec 4 // "TotalStaked"
-app_global_get
-load 67
-bytec_0 // "Staked"
-app_local_get
-<
-bnz updatestate_17_l7
-bytec 4 // "TotalStaked"
-bytec 4 // "TotalStaked"
-app_global_get
-load 67
-bytec_0 // "Staked"
-app_local_get
--
-load 88
-load 86
-global ZeroAddress
-!=
-!
-*
-+
-app_global_put
-updatestate_17_l3:
-load 67
-bytec_0 // "Staked"
-app_local_get
-intc_0 // 0
-==
-load 88
-load 86
-global ZeroAddress
-!=
-!
-*
-&&
-bnz updatestate_17_l6
-load 67
-bytec_0 // "Staked"
-app_local_get
-intc_0 // 0
-!=
-load 88
-load 86
-global ZeroAddress
-!=
-!
-*
-intc_0 // 0
-==
-&&
-bz updatestate_17_l15
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
-app_global_get
-intc_2 // 1
--
-app_global_put
-b updatestate_17_l15
-updatestate_17_l6:
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
-app_global_get
-intc_2 // 1
-+
-app_global_put
-b updatestate_17_l15
-updatestate_17_l7:
-bytec 4 // "TotalStaked"
-bytec 4 // "TotalStaked"
-app_global_get
-load 88
-load 86
-global ZeroAddress
-!=
-!
-*
-+
-load 67
-bytec_0 // "Staked"
-app_local_get
--
-app_global_put
-b updatestate_17_l3
-updatestate_17_l8:
-load 63
-app_params_get AppCreator
-store 83
-store 82
-load 83
-assert
-bytec_1 // "RPT"
-app_global_get
-store 76
-bytec_3 // "RPT_frac"
-app_global_get
-store 77
-load 82
-bytec_1 // "RPT"
-app_local_get
-store 78
-load 82
-bytec_3 // "RPT_frac"
-app_local_get
-store 79
-load 82
-bytec 6 // "AccruedRewards"
-app_local_get
-store 80
-intc_0 // 0
-store 75
-updatestate_17_l9:
-load 75
-pushint 10 // 10
-<
-bnz updatestate_17_l11
-load 82
-bytec 6 // "AccruedRewards"
-load 80
-app_local_put
-b updatestate_17_l1
-updatestate_17_l11:
-load 77
-load 75
-intc_1 // 8
-*
-extract_uint64
-load 79
-load 75
-intc_1 // 8
-*
-extract_uint64
-<
-bnz updatestate_17_l14
-load 77
-load 75
-intc_1 // 8
-*
-extract_uint64
-load 79
-load 75
-intc_1 // 8
-*
-extract_uint64
--
-store 81
-updatestate_17_l13:
-load 81
-load 82
-bytec_0 // "Staked"
-app_local_get
-mulw
-store 85
-store 84
-load 80
-load 75
-intc_1 // 8
-*
-load 80
-load 75
-intc_1 // 8
-*
-extract_uint64
-load 82
-bytec_0 // "Staked"
-app_local_get
-load 76
-load 75
-intc_1 // 8
-*
-extract_uint64
-load 78
-load 75
-intc_1 // 8
-*
-extract_uint64
--
-*
-load 84
-+
-+
-itob
-replace3
-store 80
-load 75
-intc_2 // 1
-+
-store 75
-b updatestate_17_l9
-updatestate_17_l14:
-intc 4 // 18446744073709551615
-load 79
-load 75
-intc_1 // 8
-*
-extract_uint64
--
-load 77
-load 75
-intc_1 // 8
-*
-extract_uint64
-+
-intc_2 // 1
-+
-store 81
-load 76
-load 75
-intc_1 // 8
-*
-load 76
-load 75
-intc_1 // 8
-*
-extract_uint64
-intc_2 // 1
--
-itob
-replace3
-store 76
-b updatestate_17_l13
-updatestate_17_l15:
-load 67
-bytec_0 // "Staked"
-load 88
-load 86
-global ZeroAddress
-!=
-!
-*
-app_local_put
-retsub
-
-// update_farm_reward_params
-updatefarmrewardparams_18:
-bytec 4 // "TotalStaked"
-app_global_get
-intc_0 // 0
-!=
-bytec_2 // "Duration"
-app_global_get
-intc_0 // 0
-!=
-&&
-bz updatefarmrewardparams_18_l7
-callsub innerget_23
-load 36
-callsub innerupdate_24
-store 38
-load 38
-callsub innerupdate_25
-bytec_2 // "Duration"
-bytec_2 // "Duration"
-app_global_get
-load 36
--
-app_global_put
-bytec_2 // "Duration"
-app_global_get
-intc_0 // 0
-==
-bnz updatefarmrewardparams_18_l6
-updatefarmrewardparams_18_l2:
-bytec_2 // "Duration"
-app_global_get
-intc_0 // 0
-==
-bnz updatefarmrewardparams_18_l5
-load 37
-callsub innerupdate_26
-store 38
-load 38
-callsub innerupdate_27
-bytec_2 // "Duration"
-bytec_2 // "Duration"
-app_global_get
-load 37
--
-app_global_put
-bytec_2 // "Duration"
-app_global_get
-intc_0 // 0
-==
-bz updatefarmrewardparams_18_l7
-bytec_2 // "Duration"
-bytec 7 // "NextDuration"
-app_global_get
-app_global_put
-bytec 7 // "NextDuration"
-intc_0 // 0
-app_global_put
-bytec 8 // "PendingRewards"
-bytec 11 // "NextRewards"
-app_global_get
-app_global_put
-bytec 11 // "NextRewards"
-intc_3 // 80
-bzero
-app_global_put
-b updatefarmrewardparams_18_l7
-updatefarmrewardparams_18_l5:
-retsub
-updatefarmrewardparams_18_l6:
-bytec_2 // "Duration"
-bytec 7 // "NextDuration"
-app_global_get
-app_global_put
-bytec 7 // "NextDuration"
-intc_0 // 0
-app_global_put
-bytec 8 // "PendingRewards"
-bytec 11 // "NextRewards"
-app_global_get
-app_global_put
-bytec 11 // "NextRewards"
-intc_3 // 80
-bzero
-app_global_put
-b updatefarmrewardparams_18_l2
-updatefarmrewardparams_18_l7:
-bytec 15 // "UpdatedAt"
-global LatestTimestamp
-app_global_put
-retsub
-
-// update_user_rpt
-updateuserrpt_19:
-store 90
-load 90
-app_params_get AppCreator
-store 92
-store 91
-load 92
-assert
-load 91
-bytec_1 // "RPT"
-app_local_get
-intc_3 // 80
-bzero
-==
-load 91
-bytec_0 // "Staked"
-app_local_get
-intc_0 // 0
-==
-&&
-!
-bz updateuserrpt_19_l8
-load 90
-app_params_get AppCreator
-store 101
-store 100
-load 101
-assert
-bytec_1 // "RPT"
-app_global_get
-store 94
-bytec_3 // "RPT_frac"
-app_global_get
-store 95
-load 100
-bytec_1 // "RPT"
-app_local_get
-store 96
-load 100
-bytec_3 // "RPT_frac"
-app_local_get
-store 97
-load 100
-bytec 6 // "AccruedRewards"
-app_local_get
-store 98
-intc_0 // 0
-store 93
-updateuserrpt_19_l2:
-load 93
-pushint 10 // 10
-<
-bnz updateuserrpt_19_l4
-load 100
-bytec 6 // "AccruedRewards"
 load 98
-app_local_put
-b updateuserrpt_19_l8
-updateuserrpt_19_l4:
-load 95
-load 93
-intc_1 // 8
-*
-extract_uint64
-load 97
-load 93
-intc_1 // 8
-*
-extract_uint64
-<
-bnz updateuserrpt_19_l7
-load 95
-load 93
-intc_1 // 8
-*
-extract_uint64
-load 97
-load 93
-intc_1 // 8
-*
-extract_uint64
--
-store 99
-updateuserrpt_19_l6:
-load 99
-load 100
-bytec_0 // "Staked"
-app_local_get
-mulw
+intc_0 // 0
+bytec 9 // "Staked"
+app_local_get_ex
 store 103
 store 102
-load 98
-load 93
-intc_1 // 8
-*
-load 98
-load 93
-intc_1 // 8
-*
-extract_uint64
-load 100
-bytec_0 // "Staked"
-app_local_get
+load 103
+// creator is not opted in
+assert
 load 94
-load 93
-intc_1 // 8
-*
-extract_uint64
 load 96
-load 93
+callsub validatemicrofarm_12
+// MicroFarm validation failed
+assert
+bytec 5 // "TotalStaked"
+app_global_get
+intc_0 // 0
+!=
+bytec_0 // "Duration"
+app_global_get
+intc_0 // 0
+!=
+&&
+bnz updatestate_21_l7
+updatestate_21_l1:
+bytec 14 // "UpdatedAt"
+global LatestTimestamp
+app_global_put
+bytec_1 // "RPT"
+app_global_get
+store 137
+bytec_2 // "RPT_frac"
+app_global_get
+store 138
+load 98
+bytec 9 // "Staked"
+app_local_get
+store 139
+load 98
+bytec_1 // "RPT"
+app_local_get
+store 140
+load 98
+bytec_2 // "RPT_frac"
+app_local_get
+store 141
+load 98
+bytec 10 // "AccruedRewards"
+app_local_get
+store 142
+intc_0 // 0
+store 143
+updatestate_21_l2:
+load 143
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+<
+bz updatestate_21_l15
+load 137
+load 143
 intc_1 // 8
 *
 extract_uint64
--
+store 144
+load 138
+load 143
+intc_1 // 8
 *
-load 102
+extract_uint64
+store 145
+load 140
+load 143
+intc_1 // 8
+*
+extract_uint64
+store 146
+load 141
+load 143
+intc_1 // 8
+*
+extract_uint64
+store 147
+load 147
+load 145
+<=
+bnz updatestate_21_l6
+pushint 18446744073709551615 // 18446744073709551615
+load 147
+-
+load 145
 +
+intc_2 // 1
++
+store 150
+load 144
+load 146
+-
+intc_2 // 1
+-
+store 149
+updatestate_21_l5:
+load 98
+bytec 9 // "Staked"
+app_local_get
+load 150
+mulw
+store 0
+store 151
+load 98
+bytec 9 // "Staked"
+app_local_get
+load 149
+*
+load 151
++
+store 148
+load 142
+load 143
+intc_1 // 8
+*
+load 142
+load 143
+intc_1 // 8
+*
+extract_uint64
+load 148
 +
 itob
 replace3
-store 98
-load 93
+store 142
+load 143
 intc_2 // 1
 +
-store 93
-b updateuserrpt_19_l2
-updateuserrpt_19_l7:
-intc 4 // 18446744073709551615
-load 97
-load 93
-intc_1 // 8
-*
-extract_uint64
+store 143
+b updatestate_21_l2
+updatestate_21_l6:
+load 145
+load 147
 -
-load 95
-load 93
-intc_1 // 8
-*
-extract_uint64
-+
-intc_2 // 1
-+
-store 99
-load 94
-load 93
-intc_1 // 8
-*
-load 94
-load 93
-intc_1 // 8
-*
-extract_uint64
-intc_2 // 1
+store 150
+load 144
+load 146
 -
-itob
-replace3
-store 94
-b updateuserrpt_19_l6
-updateuserrpt_19_l8:
-load 91
-bytec_1 // "RPT"
+store 149
+b updatestate_21_l5
+updatestate_21_l7:
+global LatestTimestamp
+bytec 14 // "UpdatedAt"
+app_global_get
+-
+store 106
+bytec_0 // "Duration"
+app_global_get
+load 106
+dup2
+>
+select
+store 104
+bytec 7 // "NextDuration"
+app_global_get
+load 106
+load 104
+-
+dup2
+>
+select
+store 105
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+store 109
+bytec_0 // "Duration"
+app_global_get
+store 107
+bytec 5 // "TotalStaked"
+app_global_get
+store 108
 bytec_1 // "RPT"
 app_global_get
-app_local_put
-load 91
-bytec_3 // "RPT_frac"
-bytec_3 // "RPT_frac"
+store 110
+bytec_2 // "RPT_frac"
 app_global_get
-app_local_put
-retsub
-
-// update_user_accrued_rewards
-updateuseraccruedrewards_20:
-app_params_get AppCreator
+store 111
+bytec 4 // "PendingRewards"
+app_global_get
 store 112
+bytec_3 // "TotalRewards"
+app_global_get
+store 113
+intc_0 // 0
+store 114
+updatestate_21_l8:
+load 114
+load 109
+<
+bnz updatestate_21_l14
+bytec_0 // "Duration"
+bytec_0 // "Duration"
+app_global_get
+load 104
+-
+app_global_put
+bytec_1 // "RPT"
+load 110
+app_global_put
+bytec_2 // "RPT_frac"
+load 111
+app_global_put
+bytec 4 // "PendingRewards"
+load 112
+app_global_put
+bytec_3 // "TotalRewards"
+load 113
+app_global_put
+load 105
+bz updatestate_21_l1
+bytec 4 // "PendingRewards"
+bytec 11 // "NextRewards"
+app_global_get
+app_global_put
+bytec_0 // "Duration"
+bytec 7 // "NextDuration"
+app_global_get
+app_global_put
+bytec 11 // "NextRewards"
+intc_3 // 48
+bzero
+app_global_put
+bytec 7 // "NextDuration"
+intc_0 // 0
+app_global_put
+bytec 8 // "RewardAssetIDs"
+app_global_get
+len
+intc_1 // 8
+/
+store 124
+bytec_0 // "Duration"
+app_global_get
+store 122
+bytec 5 // "TotalStaked"
+app_global_get
+store 123
+bytec_1 // "RPT"
+app_global_get
+store 125
+bytec_2 // "RPT_frac"
+app_global_get
+store 126
+bytec 4 // "PendingRewards"
+app_global_get
+store 127
+bytec_3 // "TotalRewards"
+app_global_get
+store 128
+intc_0 // 0
+store 129
+updatestate_21_l11:
+load 129
+load 124
+<
+bnz updatestate_21_l13
+bytec_0 // "Duration"
+bytec_0 // "Duration"
+app_global_get
+load 105
+-
+app_global_put
+bytec_1 // "RPT"
+load 125
+app_global_put
+bytec_2 // "RPT_frac"
+load 126
+app_global_put
+bytec 4 // "PendingRewards"
+load 127
+app_global_put
+bytec_3 // "TotalRewards"
+load 128
+app_global_put
+b updatestate_21_l1
+updatestate_21_l13:
+load 127
+load 129
+intc_1 // 8
+*
+extract_uint64
+store 130
+load 130
+load 105
+mulw
+intc_0 // 0
+load 122
+divmodw
+pop
+pop
+swap
+!
+assert
+store 133
+load 133
+load 123
+/
+store 134
+load 133
+load 123
+%
+intc_0 // 0
+load 123
+divw
+store 135
+load 126
+load 129
+intc_1 // 8
+*
+extract_uint64
+load 135
+addw
+store 132
+store 136
+load 125
+load 129
+intc_1 // 8
+*
+extract_uint64
+load 134
++
+load 136
++
+store 131
+load 125
+load 129
+intc_1 // 8
+*
+load 131
+itob
+replace3
+store 125
+load 126
+load 129
+intc_1 // 8
+*
+load 132
+itob
+replace3
+store 126
+load 127
+load 129
+intc_1 // 8
+*
+load 130
+load 133
+-
+itob
+replace3
+store 127
+load 128
+load 129
+intc_1 // 8
+*
+load 128
+load 129
+intc_1 // 8
+*
+extract_uint64
+load 133
++
+itob
+replace3
+store 128
+load 129
+intc_2 // 1
++
+store 129
+b updatestate_21_l11
+updatestate_21_l14:
+load 112
+load 114
+intc_1 // 8
+*
+extract_uint64
+store 115
+load 115
+load 104
+mulw
+intc_0 // 0
+load 107
+divmodw
+pop
+pop
+swap
+!
+assert
+store 118
+load 118
+load 108
+/
+store 119
+load 118
+load 108
+%
+intc_0 // 0
+load 108
+divw
+store 120
+load 111
+load 114
+intc_1 // 8
+*
+extract_uint64
+load 120
+addw
+store 117
+store 121
+load 110
+load 114
+intc_1 // 8
+*
+extract_uint64
+load 119
++
+load 121
++
+store 116
+load 110
+load 114
+intc_1 // 8
+*
+load 116
+itob
+replace3
+store 110
+load 111
+load 114
+intc_1 // 8
+*
+load 117
+itob
+replace3
 store 111
 load 112
-assert
-bytec_1 // "RPT"
-app_global_get
-store 105
-bytec_3 // "RPT_frac"
-app_global_get
-store 106
-load 111
-bytec_1 // "RPT"
-app_local_get
-store 107
-load 111
-bytec_3 // "RPT_frac"
-app_local_get
-store 108
-load 111
-bytec 6 // "AccruedRewards"
-app_local_get
-store 109
-intc_0 // 0
-store 104
-updateuseraccruedrewards_20_l1:
-load 104
-pushint 10 // 10
-<
-bz updateuseraccruedrewards_20_l6
-load 106
-load 104
+load 114
 intc_1 // 8
 *
-extract_uint64
-load 108
-load 104
-intc_1 // 8
-*
-extract_uint64
-<
-bnz updateuseraccruedrewards_20_l5
-load 106
-load 104
-intc_1 // 8
-*
-extract_uint64
-load 108
-load 104
-intc_1 // 8
-*
-extract_uint64
+load 115
+load 118
 -
-store 110
-updateuseraccruedrewards_20_l4:
-load 110
-load 111
-bytec_0 // "Staked"
-app_local_get
-mulw
-store 114
-store 113
-load 109
-load 104
+itob
+replace3
+store 112
+load 113
+load 114
 intc_1 // 8
-*
-load 109
-load 104
-intc_1 // 8
-*
-extract_uint64
-load 111
-bytec_0 // "Staked"
-app_local_get
-load 105
-load 104
-intc_1 // 8
-*
-extract_uint64
-load 107
-load 104
-intc_1 // 8
-*
-extract_uint64
--
 *
 load 113
-+
+load 114
+intc_1 // 8
+*
+extract_uint64
+load 118
 +
 itob
 replace3
-store 109
-load 104
+store 113
+load 114
 intc_2 // 1
 +
-store 104
-b updateuseraccruedrewards_20_l1
-updateuseraccruedrewards_20_l5:
-intc 4 // 18446744073709551615
-load 108
-load 104
-intc_1 // 8
+store 114
+b updatestate_21_l8
+updatestate_21_l15:
+load 100
+acct_params_get AcctAuthAddr
+store 153
+store 152
+load 100
+bytec 19 // "StakedAssetID"
+app_global_get
+asset_holding_get AssetBalance
+store 155
+store 154
+load 152
+global ZeroAddress
+==
+load 154
 *
-extract_uint64
+store 156
+bytec 5 // "TotalStaked"
+bytec 5 // "TotalStaked"
+app_global_get
+load 139
 -
-load 106
-load 104
-intc_1 // 8
-*
-extract_uint64
+load 156
 +
-intc_2 // 1
-+
-store 110
-load 105
-load 104
-intc_1 // 8
-*
-load 105
-load 104
-intc_1 // 8
-*
-extract_uint64
-intc_2 // 1
--
-itob
-replace3
-store 105
-b updateuseraccruedrewards_20_l4
-updateuseraccruedrewards_20_l6:
-load 111
-bytec 6 // "AccruedRewards"
-load 109
+app_global_put
+load 139
+load 156
+callsub updatenumberofstakers_25
+load 98
+bytec 9 // "Staked"
+load 156
+app_local_put
+load 98
+bytec_1 // "RPT"
+load 137
+app_local_put
+load 98
+bytec_2 // "RPT_frac"
+load 138
+app_local_put
+load 98
+bytec 10 // "AccruedRewards"
+load 142
 app_local_put
 retsub
 
 // claim_rewards
-claimrewards_21:
-store 116
-store 115
-bytec 14 // "RewardAssetIDs"
+claimrewards_22:
+store 168
+store 167
+bytec 8 // "RewardAssetIDs"
 app_global_get
-store 118
-load 118
+store 170
+load 170
 len
 intc_1 // 8
 /
-store 117
-bytec 9 // "ClaimedRewards"
+store 169
+bytec 13 // "ClaimedRewards"
 app_global_get
-store 119
-load 115
+store 171
+load 167
 txnas Accounts
-bytec 6 // "AccruedRewards"
+bytec 10 // "AccruedRewards"
 app_local_get
-store 120
-load 115
+store 172
+load 167
 txnas Accounts
-bytec 9 // "ClaimedRewards"
+bytec 13 // "ClaimedRewards"
 app_local_get
-store 121
-load 116
+store 173
+load 168
 intc_0 // 0
 extract_uint16
-store 122
+store 174
 intc_0 // 0
-store 126
-claimrewards_21_l1:
-load 126
-load 122
+store 178
+claimrewards_22_l1:
+load 178
+load 174
 <
-bz claimrewards_21_l3
-load 116
+bz claimrewards_22_l3
+load 168
 intc_1 // 8
-load 126
+load 178
 *
 pushint 2 // 2
 +
 extract_uint64
-store 123
-load 123
-load 117
+store 175
+load 175
+load 169
 <=
 // Requested reward index out of bounds
 assert
-load 118
-load 123
+load 170
+load 175
 intc_1 // 8
 *
 extract_uint64
-store 125
-load 120
-load 123
+store 177
+load 172
+load 175
 intc_1 // 8
 *
 extract_uint64
-store 124
-load 115
+store 176
+load 167
 txnas Accounts
-load 125
-load 124
+load 177
+load 176
 callsub SendToAddress_0
-load 120
-load 123
+load 172
+load 175
 intc_1 // 8
 *
 intc_0 // 0
 itob
 replace3
-store 120
-load 119
-load 123
+store 172
+load 171
+load 175
 intc_1 // 8
 *
-load 119
-load 123
-intc_1 // 8
-*
-extract_uint64
-load 124
-+
-itob
-replace3
-store 119
-load 121
-load 123
-intc_1 // 8
-*
-load 121
-load 123
+load 171
+load 175
 intc_1 // 8
 *
 extract_uint64
-load 124
+load 176
 +
 itob
 replace3
-store 121
-load 126
+store 171
+load 173
+load 175
+intc_1 // 8
+*
+load 173
+load 175
+intc_1 // 8
+*
+extract_uint64
+load 176
++
+itob
+replace3
+store 173
+load 178
 intc_2 // 1
 +
-store 126
-b claimrewards_21_l1
-claimrewards_21_l3:
-bytec 9 // "ClaimedRewards"
-load 119
+store 178
+b claimrewards_22_l1
+claimrewards_22_l3:
+bytec 13 // "ClaimedRewards"
+load 171
 app_global_put
-load 115
+load 167
 txnas Accounts
-bytec 6 // "AccruedRewards"
-load 120
+bytec 10 // "AccruedRewards"
+load 172
 app_local_put
-load 115
+load 167
 txnas Accounts
-bytec 9 // "ClaimedRewards"
-load 121
+bytec 13 // "ClaimedRewards"
+load 173
 app_local_put
 retsub
 
 // exit_farm
-exitfarm_22:
+exitfarm_23:
 txn Sender
-bytec_0 // "Staked"
+bytec 9 // "Staked"
 app_local_get
+store 184
+bytec 5 // "TotalStaked"
+bytec 5 // "TotalStaked"
+app_global_get
+load 184
+-
+app_global_put
+load 184
 intc_0 // 0
-==
-intc_0 // 0
-&&
-bnz exitfarm_22_l3
+callsub updatenumberofstakers_26
+bytec_3 // "TotalRewards"
+app_global_get
+store 182
 txn Sender
-bytec_0 // "Staked"
+bytec 10 // "AccruedRewards"
 app_local_get
+store 183
 intc_0 // 0
-!=
-intc_0 // 0
-intc_0 // 0
-==
+store 185
+exitfarm_23_l1:
+load 185
+pushint 6 // 6
+<
+bz exitfarm_23_l3
+load 182
+load 185
+intc_1 // 8
+*
+load 182
+load 185
+intc_1 // 8
+*
+extract_uint64
+load 183
+load 185
+intc_1 // 8
+*
+extract_uint64
+-
+itob
+replace3
+store 182
+load 185
+intc_2 // 1
++
+store 185
+b exitfarm_23_l1
+exitfarm_23_l3:
+bytec_3 // "TotalRewards"
+load 182
+app_global_put
+retsub
+
+// _update_number_of_stakers
+updatenumberofstakers_24:
+store 19
+store 18
+load 18
+load 19
+!
 &&
-bz exitfarm_22_l4
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
-app_global_get
-intc_2 // 1
--
-app_global_put
-b exitfarm_22_l4
-exitfarm_22_l3:
-bytec 5 // "NumStakers"
-bytec 5 // "NumStakers"
-app_global_get
-intc_2 // 1
-+
-app_global_put
-exitfarm_22_l4:
-retsub
-
-// inner_get
-innerget_23:
-global LatestTimestamp
-bytec 15 // "UpdatedAt"
-app_global_get
--
-bytec_2 // "Duration"
-app_global_get
-dup2
->
-select
-store 36
-load 36
-bytec_2 // "Duration"
-app_global_get
-==
-bnz innerget_23_l2
-intc_0 // 0
-store 37
-b innerget_23_l3
-innerget_23_l2:
-global LatestTimestamp
-bytec 15 // "UpdatedAt"
-app_global_get
-bytec_2 // "Duration"
-app_global_get
-+
--
-bytec 7 // "NextDuration"
-app_global_get
-dup2
->
-select
-store 37
-innerget_23_l3:
-retsub
-
-// inner_update
-innerupdate_24:
-store 39
-bytec 8 // "PendingRewards"
-app_global_get
-store 42
-bytec 13 // "TotalRewards"
-app_global_get
-store 41
-intc_3 // 80
-bzero
-store 43
-intc_0 // 0
-store 40
-innerupdate_24_l1:
-load 40
-pushint 10 // 10
-<
-bz innerupdate_24_l3
-load 43
-load 40
-intc_1 // 8
-*
-load 39
-load 42
-load 40
-intc_1 // 8
-*
-extract_uint64
-mulw
-intc_0 // 0
-bytec_2 // "Duration"
-app_global_get
-divmodw
-pop
-pop
-swap
+bnz updatenumberofstakers_24_l3
+load 18
 !
-assert
-itob
-replace3
-store 43
-load 42
-load 40
-intc_1 // 8
-*
-load 42
-load 40
-intc_1 // 8
-*
-extract_uint64
-load 43
-load 40
-intc_1 // 8
-*
-extract_uint64
+load 19
+&&
+bz updatenumberofstakers_24_l4
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
+app_global_get
+intc_2 // 1
++
+app_global_put
+b updatenumberofstakers_24_l4
+updatenumberofstakers_24_l3:
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
+app_global_get
+intc_2 // 1
 -
-itob
-replace3
-store 42
-load 41
-load 40
-intc_1 // 8
-*
-load 41
-load 40
-intc_1 // 8
-*
-extract_uint64
-load 43
-load 40
-intc_1 // 8
-*
-extract_uint64
-+
-itob
-replace3
-store 41
-load 40
-intc_2 // 1
-+
-store 40
-b innerupdate_24_l1
-innerupdate_24_l3:
-bytec 13 // "TotalRewards"
-load 41
 app_global_put
-bytec 8 // "PendingRewards"
-load 42
-app_global_put
-load 43
+updatenumberofstakers_24_l4:
 retsub
 
-// inner_update
-innerupdate_25:
-store 44
-bytec 4 // "TotalStaked"
-app_global_get
-intc_0 // 0
-==
-bnz innerupdate_25_l4
-bytec_1 // "RPT"
-app_global_get
-store 47
-bytec_3 // "RPT_frac"
-app_global_get
-store 48
-load 44
-store 46
-intc_0 // 0
-store 45
-innerupdate_25_l2:
-load 45
-pushint 10 // 10
-<
-bz innerupdate_25_l5
-load 46
-load 45
-intc_1 // 8
-*
-extract_uint64
-bytec 4 // "TotalStaked"
-app_global_get
-%
-intc_0 // 0
-bytec 4 // "TotalStaked"
-app_global_get
-divw
-load 48
-load 45
-intc_1 // 8
-*
-extract_uint64
-addw
-store 50
-store 49
-load 47
-load 45
-intc_1 // 8
-*
-load 47
-load 45
-intc_1 // 8
-*
-extract_uint64
-load 46
-load 45
-intc_1 // 8
-*
-extract_uint64
-bytec 4 // "TotalStaked"
-app_global_get
-/
-+
-load 49
-+
-itob
-replace3
-store 47
-load 48
-load 45
-intc_1 // 8
-*
-load 50
-itob
-replace3
-store 48
-load 45
-intc_2 // 1
-+
-store 45
-b innerupdate_25_l2
-innerupdate_25_l4:
-retsub
-innerupdate_25_l5:
-bytec_1 // "RPT"
-load 47
-app_global_put
-bytec_3 // "RPT_frac"
-load 48
-app_global_put
-retsub
-
-// inner_update
-innerupdate_26:
-store 51
-bytec 8 // "PendingRewards"
-app_global_get
-store 54
-bytec 13 // "TotalRewards"
-app_global_get
-store 53
-intc_3 // 80
-bzero
-store 55
-intc_0 // 0
-store 52
-innerupdate_26_l1:
-load 52
-pushint 10 // 10
-<
-bz innerupdate_26_l3
-load 55
-load 52
-intc_1 // 8
-*
-load 51
-load 54
-load 52
-intc_1 // 8
-*
-extract_uint64
-mulw
-intc_0 // 0
-bytec_2 // "Duration"
-app_global_get
-divmodw
-pop
-pop
-swap
+// _update_number_of_stakers
+updatenumberofstakers_25:
+store 166
+store 165
+load 165
+load 166
 !
-assert
-itob
-replace3
-store 55
-load 54
-load 52
-intc_1 // 8
-*
-load 54
-load 52
-intc_1 // 8
-*
-extract_uint64
-load 55
-load 52
-intc_1 // 8
-*
-extract_uint64
--
-itob
-replace3
-store 54
-load 53
-load 52
-intc_1 // 8
-*
-load 53
-load 52
-intc_1 // 8
-*
-extract_uint64
-load 55
-load 52
-intc_1 // 8
-*
-extract_uint64
-+
-itob
-replace3
-store 53
-load 52
+&&
+bnz updatenumberofstakers_25_l3
+load 165
+!
+load 166
+&&
+bz updatenumberofstakers_25_l4
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
+app_global_get
 intc_2 // 1
 +
-store 52
-b innerupdate_26_l1
-innerupdate_26_l3:
-bytec 13 // "TotalRewards"
-load 53
 app_global_put
-bytec 8 // "PendingRewards"
-load 54
+b updatenumberofstakers_25_l4
+updatenumberofstakers_25_l3:
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
+app_global_get
+intc_2 // 1
+-
 app_global_put
-load 55
+updatenumberofstakers_25_l4:
 retsub
 
-// inner_update
-innerupdate_27:
-store 56
-bytec 4 // "TotalStaked"
+// _update_number_of_stakers
+updatenumberofstakers_26:
+store 187
+store 186
+load 186
+load 187
+!
+&&
+bnz updatenumberofstakers_26_l3
+load 186
+!
+load 187
+&&
+bz updatenumberofstakers_26_l4
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
 app_global_get
-intc_0 // 0
-==
-bnz innerupdate_27_l4
-bytec_1 // "RPT"
-app_global_get
-store 59
-bytec_3 // "RPT_frac"
-app_global_get
-store 60
-load 56
-store 58
-intc_0 // 0
-store 57
-innerupdate_27_l2:
-load 57
-pushint 10 // 10
-<
-bz innerupdate_27_l5
-load 58
-load 57
-intc_1 // 8
-*
-extract_uint64
-bytec 4 // "TotalStaked"
-app_global_get
-%
-intc_0 // 0
-bytec 4 // "TotalStaked"
-app_global_get
-divw
-load 60
-load 57
-intc_1 // 8
-*
-extract_uint64
-addw
-store 62
-store 61
-load 59
-load 57
-intc_1 // 8
-*
-load 59
-load 57
-intc_1 // 8
-*
-extract_uint64
-load 58
-load 57
-intc_1 // 8
-*
-extract_uint64
-bytec 4 // "TotalStaked"
-app_global_get
-/
-+
-load 61
-+
-itob
-replace3
-store 59
-load 60
-load 57
-intc_1 // 8
-*
-load 62
-itob
-replace3
-store 60
-load 57
 intc_2 // 1
 +
-store 57
-b innerupdate_27_l2
-innerupdate_27_l4:
-retsub
-innerupdate_27_l5:
-bytec_1 // "RPT"
-load 59
 app_global_put
-bytec_3 // "RPT_frac"
-load 60
+b updatenumberofstakers_26_l4
+updatenumberofstakers_26_l3:
+bytec 6 // "NumStakers"
+bytec 6 // "NumStakers"
+app_global_get
+intc_2 // 1
+-
 app_global_put
+updatenumberofstakers_26_l4:
 retsub
