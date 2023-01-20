@@ -92,7 +92,7 @@ def deploy_contract():
 @deploy_contract.command()
 @click.option(
     "--contract-type",
-    type=click.Choice(["constant_product", "stableswap"]),
+    type=click.Choice(["constant_product", "stableswap", "nft_constant_product"]),
     prompt="Contract type",
 )
 @click.option(
@@ -153,6 +153,7 @@ def exchange(
     admin_and_treasury_address: str,
 ):
     contract_dict = {
+        ("nft_constant_product", None): (transaction.StateSchema(9, 4), 6),
         ("constant_product", None): (transaction.StateSchema(9, 4), 6),
         ("constant_product", 2): (transaction.StateSchema(9, 4), 6),
         ("constant_product", 1): (transaction.StateSchema(4, 1), 5),
