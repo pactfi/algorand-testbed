@@ -302,7 +302,7 @@ def farm(staked_asset_id: int, gas_station_id: int, admin: str):
         on_complete=transaction.OnComplete.NoOpOC,
         approval_program=compiled_approval,
         clear_program=compiled_clear,
-        global_schema=transaction.StateSchema(7, 9),
+        global_schema=transaction.StateSchema(7, 10),
         local_schema=transaction.StateSchema(2, 4),
         foreign_assets=[staked_asset_id],
         foreign_apps=[gas_station_id],
