@@ -274,12 +274,15 @@ def gas_station():
     prompt="Admin address",
 )
 def farm(staked_asset_id: int, gas_station_id: int, admin: str):
-    path = CONTRACTS_PATH / "farm.teal"
-    with open(path, "r") as file_:
+    path_approval = CONTRACTS_PATH / "farm.teal"
+    path_clear = CONTRACTS_PATH / "farm_clear.teal"
+    with open(path_approval, "r") as file_:
         approval_teal = file_.read()
         # Make the contract operate on blocks instead of seconds. Makes the testing easier by avoiding the need to wait some to time before the rewards accrue.
         approval_teal = approval_teal.replace("LatestTimestamp", "Round")
-    clear_teal = "#pragma version 8\npushint 0 // 0\nreturn"
+
+    with open(path_clear, "r") as file_:
+        clear_teal = file_.read()
 
     # compile contracts to bytecode
     compiled_approval = b64decode(client.compile(approval_teal)["result"])
@@ -315,7 +318,7 @@ def farm(staked_asset_id: int, gas_station_id: int, admin: str):
             0,
             0,
         ],
-        extra_pages=1,
+        extra_pages=2,
     )
 
     txs = transaction.assign_group_id([fund_tx, create_tx])
