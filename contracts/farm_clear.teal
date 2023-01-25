@@ -1,0 +1,102 @@
+#pragma version 8
+intcblock 1 0 8
+bytecblock 0x4e756d5374616b657273 0x546f74616c5374616b6564 0x546f74616c52657761726473
+txn NumAppArgs
+intc_1 // 0
+==
+bnz main_l2
+err
+main_l2:
+callsub clearstate_0
+intc_0 // 1
+return
+
+// clear_state
+clearstate_0:
+txn Sender
+pushbytes 0x5374616b6564 // "Staked"
+app_local_get
+store 2
+bytec_1 // "TotalStaked"
+bytec_1 // "TotalStaked"
+app_global_get
+load 2
+-
+app_global_put
+load 2
+intc_1 // 0
+callsub updatenumberofstakers_1
+bytec_2 // "TotalRewards"
+app_global_get
+store 0
+txn Sender
+pushbytes 0x4163637275656452657761726473 // "AccruedRewards"
+app_local_get
+store 1
+intc_1 // 0
+store 3
+clearstate_0_l1:
+load 3
+pushint 7 // 7
+<
+bz clearstate_0_l3
+load 0
+load 3
+intc_2 // 8
+*
+load 0
+load 3
+intc_2 // 8
+*
+extract_uint64
+load 1
+load 3
+intc_2 // 8
+*
+extract_uint64
+-
+itob
+replace3
+store 0
+load 3
+intc_0 // 1
++
+store 3
+b clearstate_0_l1
+clearstate_0_l3:
+bytec_2 // "TotalRewards"
+load 0
+app_global_put
+intc_0 // 1
+return
+
+// _update_number_of_stakers
+updatenumberofstakers_1:
+store 5
+store 4
+load 4
+load 5
+!
+&&
+bnz updatenumberofstakers_1_l3
+load 4
+!
+load 5
+&&
+bz updatenumberofstakers_1_l4
+bytec_0 // "NumStakers"
+bytec_0 // "NumStakers"
+app_global_get
+intc_0 // 1
++
+app_global_put
+b updatenumberofstakers_1_l4
+updatenumberofstakers_1_l3:
+bytec_0 // "NumStakers"
+bytec_0 // "NumStakers"
+app_global_get
+intc_0 // 1
+-
+app_global_put
+updatenumberofstakers_1_l4:
+retsub
