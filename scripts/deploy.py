@@ -9,7 +9,7 @@ import algosdk
 import click
 import dotenv
 from algosdk import abi
-from algosdk.future import transaction
+from algosdk import transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 from Cryptodome.Hash import SHA512
