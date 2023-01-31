@@ -1140,10 +1140,10 @@ byte "LTID"
 int 0
 app_global_put
 byte "ADMIN"
-addr P3YP3WOLTFNE64JAY7O4CODDYE56BODRRKDKW3TSZWHPANRMUYRPOSUNXY
+addr {admin_and_treasury_address}
 app_global_put
 byte "TREASURY"
-addr P3YP3WOLTFNE64JAY7O4CODDYE56BODRRKDKW3TSZWHPANRMUYRPOSUNXY
+addr {admin_and_treasury_address}
 app_global_put
 byte "FEE_BPS"
 int {fee_bps}
