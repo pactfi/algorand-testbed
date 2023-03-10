@@ -2,10 +2,7 @@ import os
 import sys
 from typing import List, Union
 
-from algosdk.transaction import (
-    SignedTransaction,
-    SuggestedParams,
-)
+from algosdk.transaction import SignedTransaction, SuggestedParams
 from algosdk.v2client.algod import AlgodClient
 
 # add "../" to path

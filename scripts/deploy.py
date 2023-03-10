@@ -3,13 +3,12 @@ import os
 import pathlib
 import sys
 from base64 import b64decode
-from typing import Union
+from typing import Optional, Union
 
 import algosdk
 import click
 import dotenv
-from algosdk import abi
-from algosdk import transaction
+from algosdk import abi, transaction
 from algosdk.logic import get_application_address
 from algosdk.v2client.algod import AlgodClient
 from Cryptodome.Hash import SHA512
@@ -48,14 +47,17 @@ def get_selector(method_signature: str) -> bytes:
 
 
 def get_contract_txn(
-    contract_type: str, global_schema, teal_version: int, version: int, **format_data
+    contract_type: str,
+    global_schema,
+    teal_version: int,
+    version: int,
+    app_args: Optional[list] = None,
+    **format_data,
 ):
     sender = DEPLOYER_ADDRESS
-    contract_type = (
-        contract_type + "_v_1"
-        if (version == 1 and contract_type == "constant_product")
-        else contract_type
-    )
+    if version > 0:
+        contract_type += f"_v_{version}"
+
     path = CONTRACTS_PATH / f"{contract_type}.teal"
     with open(path, "r") as file_:
         ssc_teal = file_.read().format(**format_data)
@@ -69,18 +71,19 @@ def get_contract_txn(
     clear_raw: str = compiled_clear["result"]
 
     return transaction.ApplicationCreateTxn(
-        sender,
-        client.suggested_params(),
-        transaction.OnComplete.NoOpOC,
-        b64decode(ssc_raw),
-        b64decode(clear_raw),
-        global_schema,
-        transaction.StateSchema(0, 0),
+        sender=sender,
+        sp=client.suggested_params(),
+        on_complete=transaction.OnComplete.NoOpOC,
+        approval_program=b64decode(ssc_raw),
+        clear_program=b64decode(clear_raw),
+        global_schema=global_schema,
+        local_schema=transaction.StateSchema(0, 0),
         foreign_assets=[
             format_data["primary_asset_id"],
             format_data["secondary_asset_id"],
         ],
         extra_pages=1,
+        app_args=app_args,
     )
 
 
@@ -154,12 +157,23 @@ def exchange(
 ):
     contract_dict = {
         ("nft_constant_product", None): (transaction.StateSchema(9, 4), 6),
-        ("constant_product", None): (transaction.StateSchema(9, 4), 6),
+        ("constant_product", None): (transaction.StateSchema(9, 4), 8),
+        ("constant_product", 201): (transaction.StateSchema(9, 4), 8),
         ("constant_product", 2): (transaction.StateSchema(9, 4), 6),
         ("constant_product", 1): (transaction.StateSchema(4, 1), 5),
         ("stableswap", 1): (transaction.StateSchema(13, 4), 6),
         ("stableswap", None): (transaction.StateSchema(13, 4), 6),
     }
+
+    app_args: list = []
+    if contract_type == "constant_product" and (version is None or version >= 200):
+        # Old contracts have parameters hardcoded. New contracts are configured in a transaction creating the contract.
+        app_args = [
+            fee_bps,
+            pact_fee_bps,
+            abi.AddressType().encode(admin_and_treasury_address),
+            abi.AddressType().encode(admin_and_treasury_address),
+        ]
 
     global_schema, teal_version = contract_dict[(contract_type, version)]
     contract_txn = get_contract_txn(
@@ -167,6 +181,7 @@ def exchange(
         global_schema=global_schema,
         teal_version=teal_version,
         version=version or 0,
+        app_args=app_args,
         primary_asset_id=primary_asset_id,
         secondary_asset_id=secondary_asset_id,
         fee_bps=fee_bps,
@@ -327,6 +342,67 @@ def farm(staked_asset_id: int, gas_station_id: int, admin: str):
 
     res = wait_for_confirmation(client, txs[-1].get_txid())
     app_id = res["application-index"]
+
+    print("Deployed APP ID:", app_id)
+
+
+@deploy_contract.command()
+@click.option(
+    "--contract-type",
+    type=click.Choice(["constant_product", "stableswap"]),
+    prompt="Contract type",
+)
+@click.option(
+    "--admin-and-treasury-address",
+    type=str,
+    default="",
+    prompt="Admin and treasury address",
+)
+def deploy_factory(contract_type: str, admin_and_treasury_address: str):
+    path = CONTRACTS_PATH / f"factory_{contract_type}.teal"
+    with open(path, "r") as file_:
+        approval_teal = file_.read()
+    clear_teal = "#pragma version 8\npushint 0 // 0\nreturn"
+
+    # compile contracts to bytecode
+    compiled_approval = b64decode(client.compile(approval_teal)["result"])
+    compiled_clear = b64decode(client.compile(clear_teal)["result"])
+
+    suggested_params = client.suggested_params()
+
+    app_args = [
+        get_selector("create(account,account)void"),
+        0,
+        1,
+    ]
+
+    create_tx = transaction.ApplicationCreateTxn(
+        sender=DEPLOYER_ADDRESS,
+        sp=sp_fee(suggested_params, 3000),
+        on_complete=transaction.OnComplete.NoOpOC,
+        approval_program=compiled_approval,
+        clear_program=compiled_clear,
+        global_schema=transaction.StateSchema(1, 4),
+        local_schema=transaction.StateSchema(0, 0),
+        extra_pages=1,
+        app_args=app_args,
+        accounts=[admin_and_treasury_address, admin_and_treasury_address],
+    )
+
+    client.send_transaction(create_tx.sign(DEPLOYER_PK))
+
+    res = wait_for_confirmation(client, create_tx.get_txid())
+    app_id = res["application-index"]
+
+    # Fund factory's min balance.
+    fund_tx = transaction.PaymentTxn(
+        sender=DEPLOYER_ADDRESS,
+        receiver=algosdk.logic.get_application_address(app_id),
+        amt=100_000,
+        sp=suggested_params,
+    )
+    client.send_transaction(fund_tx.sign(DEPLOYER_PK))
+    res = wait_for_confirmation(client, fund_tx.get_txid())
 
     print("Deployed APP ID:", app_id)
 

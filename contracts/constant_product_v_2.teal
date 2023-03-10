@@ -1,114 +1,13 @@
-#pragma version 8
-txn ApplicationID
-bnz main_l2
-txn OnCompletion
-int NoOp
-==
-assert
-txna Assets 0
-txna Assets 1
-<
-// Primary asset ID must be less than secondary asset ID
-assert
-txna ApplicationArgs 0
-btoi
-int 10000
-<
-// Exchange fee must be less than 10000
-assert
-txna ApplicationArgs 1
-btoi
-txna ApplicationArgs 0
-btoi
-int 2
-/
-<=
-// Pact fee must be less than half of the exchange fee
-assert
-txna ApplicationArgs 1
-btoi
-int 1000
-||
-// There must be one source of protection against LP price inflation attack
-assert
-txna ApplicationArgs 2
-len
-int 32
-==
-// Admin address must be 32 bytes long
-assert
-txna ApplicationArgs 3
-len
-int 32
-==
-// Treasury address must be 32 bytes long
-assert
-byte "CONFIG"
-txna Assets 0
-itob
-txna Assets 1
-itob
-concat
-txna ApplicationArgs 0
-btoi
-itob
-concat
-app_global_put
-byte "CONTRACT_NAME"
-byte "PACT AMM"
-app_global_put
-byte "VERSION"
-int 201
-app_global_put
-byte "A"
-int 0
-app_global_put
-byte "B"
-int 0
-app_global_put
-byte "L"
-int 0
-app_global_put
-byte "LTID"
-int 0
-app_global_put
-byte "ADMIN"
-txna ApplicationArgs 2
-app_global_put
-byte "TREASURY"
-txna ApplicationArgs 3
-app_global_put
-byte "FEE_BPS"
-txna ApplicationArgs 0
-btoi
-app_global_put
-byte "PACT_FEE_BPS"
-txna ApplicationArgs 1
-btoi
-app_global_put
-int 1
-return
-main_l2:
-byte "CONFIG"
-app_global_get
-store 2
-load 2
-extract 0 8
-btoi
-store 0
-load 2
-extract 8 8
-btoi
-store 1
+#pragma version 6
 txn RekeyTo
 global ZeroAddress
 ==
 txna Assets 0
-load 0
+int {primary_asset_id}
 ==
 &&
 txna Assets 1
-load 1
+int {secondary_asset_id}
 ==
 &&
 txn NumAssets
@@ -118,35 +17,40 @@ int 3
 txn NumAssets
 int 3
 ==
-bnz main_l95
+bnz main_l83
 int 1
-main_l4:
+main_l2:
 &&
 txn OnCompletion
 int NoOp
 ==
 &&
-assert
+!
+bnz main_l82
+txn ApplicationID
+int 0
+==
+bnz main_l81
 txna ApplicationArgs 0
 byte "OPTIN"
 ==
-bnz main_l92
+bnz main_l78
 txna ApplicationArgs 0
 byte "CLT"
 ==
-bnz main_l83
+bnz main_l69
 txna ApplicationArgs 0
 byte "SWAP"
 ==
-bnz main_l65
+bnz main_l51
 txna ApplicationArgs 0
 byte "ADDLIQ"
 ==
-bnz main_l33
+bnz main_l19
 txna ApplicationArgs 0
 byte "REMLIQ"
 ==
-bnz main_l32
+bnz main_l18
 txna ApplicationArgs 0
 byte "WITHDRAWFEES"
 ==
@@ -219,95 +123,25 @@ return
 main_l17:
 byte "TREASURY"
 app_global_get
-load 0
-load 0
-bnz main_l31
-global CurrentApplicationAddress
-balance
-global CurrentApplicationAddress
-min_balance
--
-main_l19:
-byte "A"
+int {primary_asset_id}
+byte "PRIMARY_FEES"
 app_global_get
-<
-bnz main_l30
-load 0
-bnz main_l29
-global CurrentApplicationAddress
-balance
-global CurrentApplicationAddress
-min_balance
--
-main_l22:
-byte "A"
-app_global_get
--
-main_l23:
 callsub SendToAddress_1
 byte "TREASURY"
 app_global_get
-load 1
-global CurrentApplicationAddress
-load 1
-asset_holding_get AssetBalance
-store 27
-store 26
-load 26
-byte "B"
+int {secondary_asset_id}
+byte "SECONDARY_FEES"
 app_global_get
-<
-bnz main_l28
-global CurrentApplicationAddress
-load 1
-asset_holding_get AssetBalance
-store 27
-store 26
-load 26
-byte "B"
-app_global_get
--
-main_l25:
 callsub SendToAddress_1
-load 0
-bnz main_l27
-main_l26:
+byte "PRIMARY_FEES"
+int 0
+app_global_put
+byte "SECONDARY_FEES"
+int 0
+app_global_put
 int 1
 return
-main_l27:
-byte "TREASURY"
-app_global_get
-int 0
-global CurrentApplicationAddress
-balance
-global CurrentApplicationAddress
-min_balance
--
-callsub SendToAddress_1
-b main_l26
-main_l28:
-int 0
-b main_l25
-main_l29:
-global CurrentApplicationAddress
-load 0
-asset_holding_get AssetBalance
-store 25
-store 24
-load 24
-b main_l22
-main_l30:
-int 0
-b main_l23
-main_l31:
-global CurrentApplicationAddress
-load 0
-asset_holding_get AssetBalance
-store 25
-store 24
-load 24
-b main_l19
-main_l32:
+main_l18:
 txn GroupIndex
 int 1
 -
@@ -356,10 +190,16 @@ gtxns AssetAmount
 byte "A"
 app_global_get
 mulw
+int 0
 byte "L"
 app_global_get
-divw
-store 22
+divmodw
+pop
+pop
+swap
+!
+assert
+store 19
 txn GroupIndex
 int 1
 -
@@ -367,20 +207,26 @@ gtxns AssetAmount
 byte "B"
 app_global_get
 mulw
+int 0
 byte "L"
 app_global_get
-divw
-store 23
+divmodw
+pop
+pop
+swap
+!
+assert
+store 20
 byte "A"
 byte "A"
 app_global_get
-load 22
+load 19
 -
 app_global_put
 byte "B"
 byte "B"
 app_global_get
-load 23
+load 20
 -
 app_global_put
 byte "L"
@@ -392,279 +238,291 @@ int 1
 gtxns AssetAmount
 -
 app_global_put
-load 23
+load 20
 txna ApplicationArgs 2
 btoi
 -
 pop
-load 22
-txna ApplicationArgs 1
-btoi
--
-pop
-load 0
-load 22
-callsub SendToCaller_0
-load 1
-load 23
-callsub SendToCaller_0
-int 1
-return
-main_l33:
-byte "LTID"
-app_global_get
-assert
-load 0
-!
-bnz main_l64
-txn GroupIndex
-int 2
--
-gtxns TypeEnum
-int axfer
-==
-txn GroupIndex
-int 2
--
-gtxns RekeyTo
-global ZeroAddress
-==
-&&
-txn GroupIndex
-int 2
--
-gtxns AssetCloseTo
-global ZeroAddress
-==
-&&
-txn GroupIndex
-int 2
--
-gtxns XferAsset
-load 0
-==
-&&
-txn GroupIndex
-int 2
--
-gtxns AssetReceiver
-global CurrentApplicationAddress
-==
-&&
-main_l35:
-assert
-txn GroupIndex
-int 1
--
-gtxns TypeEnum
-int axfer
-==
-txn GroupIndex
-int 1
--
-gtxns RekeyTo
-global ZeroAddress
-==
-&&
-txn GroupIndex
-int 1
--
-gtxns AssetCloseTo
-global ZeroAddress
-==
-&&
-txn GroupIndex
-int 1
--
-gtxns XferAsset
-load 1
-==
-&&
-txn GroupIndex
-int 1
--
-gtxns AssetReceiver
-global CurrentApplicationAddress
-==
-&&
-assert
-byte "L"
-app_global_get
-int 0
-==
-bnz main_l57
-load 0
-!
-bnz main_l56
-txn GroupIndex
-int 2
--
-gtxns AssetAmount
-main_l38:
-byte "L"
-app_global_get
-mulw
-byte "A"
-app_global_get
-divw
-store 15
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-byte "L"
-app_global_get
-mulw
-byte "B"
-app_global_get
-divw
-store 16
-load 15
-load 16
-dup2
->
-select
-txna ApplicationArgs 1
-btoi
--
-pop
-load 15
-load 16
-dup2
->
-select
-int 0
->
-assert
-byte "LTID"
-app_global_get
-load 15
-load 16
-dup2
->
-select
-callsub SendToCaller_0
-byte "L"
-byte "L"
-app_global_get
-load 15
-load 16
-dup2
->
-select
-+
-app_global_put
-load 15
-load 16
->
-bnz main_l52
-load 15
-load 16
-<
-bnz main_l45
-byte "A"
-byte "A"
-app_global_get
-load 0
-!
-bnz main_l44
-txn GroupIndex
-int 2
--
-gtxns AssetAmount
-main_l42:
-+
-app_global_put
-byte "B"
-byte "B"
-app_global_get
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-+
-app_global_put
-main_l43:
-int 1
-return
-main_l44:
-txn GroupIndex
-int 2
--
-gtxns Amount
-b main_l42
-main_l45:
-byte "B"
-app_global_get
-store 19
-byte "B"
-byte "B"
-app_global_get
-load 0
-!
-bnz main_l51
-txn GroupIndex
-int 2
--
-gtxns AssetAmount
-main_l47:
-byte "B"
-app_global_get
-mulw
-int 0
-byte "A"
-app_global_get
-divmodw
-||
-+
-swap
-!
-assert
-+
-app_global_put
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-byte "B"
-app_global_get
 load 19
+txna ApplicationArgs 1
+btoi
 -
--
-store 21
-load 1
-load 21
+pop
+int {primary_asset_id}
+load 19
 callsub SendToCaller_0
-byte "A"
-byte "A"
+int {secondary_asset_id}
+load 20
+callsub SendToCaller_0
+int 1
+return
+main_l19:
+byte "LTID"
 app_global_get
-load 0
+assert
+int {primary_asset_id}
 !
 bnz main_l50
 txn GroupIndex
 int 2
 -
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 2
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns XferAsset
+int {primary_asset_id}
+==
+&&
+txn GroupIndex
+int 2
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+main_l21:
+assert
+txn GroupIndex
+int 1
+-
+gtxns TypeEnum
+int axfer
+==
+txn GroupIndex
+int 1
+-
+gtxns RekeyTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetCloseTo
+global ZeroAddress
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns XferAsset
+int {secondary_asset_id}
+==
+&&
+txn GroupIndex
+int 1
+-
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+assert
+byte "L"
+app_global_get
+int 0
+==
+bnz main_l43
+int {primary_asset_id}
+!
+bnz main_l42
+txn GroupIndex
+int 2
+-
 gtxns AssetAmount
-main_l49:
-+
-app_global_put
-b main_l43
-main_l50:
-txn GroupIndex
-int 2
--
-gtxns Amount
-b main_l49
-main_l51:
-txn GroupIndex
-int 2
--
-gtxns Amount
-b main_l47
-main_l52:
+main_l24:
+byte "L"
+app_global_get
+mulw
+int 0
 byte "A"
 app_global_get
+divmodw
+pop
+pop
+swap
+!
+assert
+store 12
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+byte "L"
+app_global_get
+mulw
+int 0
+byte "B"
+app_global_get
+divmodw
+pop
+pop
+swap
+!
+assert
+store 13
+load 12
+load 13
+dup2
+>
+select
+txna ApplicationArgs 1
+btoi
+-
+pop
+load 12
+load 13
+dup2
+>
+select
+int 0
+>
+assert
+byte "LTID"
+app_global_get
+load 12
+load 13
+dup2
+>
+select
+callsub SendToCaller_0
+byte "L"
+byte "L"
+app_global_get
+load 12
+load 13
+dup2
+>
+select
++
+app_global_put
+load 12
+load 13
+>
+bnz main_l38
+load 12
+load 13
+<
+bnz main_l31
+byte "A"
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l30
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l28:
++
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
++
+app_global_put
+main_l29:
+int 1
+return
+main_l30:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l28
+main_l31:
+byte "B"
+app_global_get
+store 16
+byte "B"
+byte "B"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l37
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l33:
+byte "B"
+app_global_get
+mulw
+int 0
+byte "A"
+app_global_get
+divmodw
+||
++
+swap
+!
+assert
++
+app_global_put
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+byte "B"
+app_global_get
+load 16
+-
+-
 store 18
+int {secondary_asset_id}
+load 18
+callsub SendToCaller_0
+byte "A"
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l36
+txn GroupIndex
+int 2
+-
+gtxns AssetAmount
+main_l35:
++
+app_global_put
+b main_l29
+main_l36:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l35
+main_l37:
+txn GroupIndex
+int 2
+-
+gtxns Amount
+b main_l33
+main_l38:
+byte "A"
+app_global_get
+store 15
 byte "A"
 byte "A"
 app_global_get
@@ -686,22 +544,22 @@ swap
 assert
 +
 app_global_put
-load 0
+int {primary_asset_id}
 !
-bnz main_l55
+bnz main_l41
 txn GroupIndex
 int 2
 -
 gtxns AssetAmount
-main_l54:
+main_l40:
 byte "A"
 app_global_get
-load 18
+load 15
 -
 -
-store 20
-load 0
-load 20
+store 17
+int {primary_asset_id}
+load 17
 callsub SendToCaller_0
 byte "B"
 byte "B"
@@ -712,28 +570,28 @@ int 1
 gtxns AssetAmount
 +
 app_global_put
-b main_l43
-main_l55:
+b main_l29
+main_l41:
 txn GroupIndex
 int 2
 -
 gtxns Amount
-b main_l54
-main_l56:
+b main_l40
+main_l42:
 txn GroupIndex
 int 2
 -
 gtxns Amount
-b main_l38
-main_l57:
-load 0
+b main_l24
+main_l43:
+int {primary_asset_id}
 !
-bnz main_l63
+bnz main_l49
 txn GroupIndex
 int 2
 -
 gtxns AssetAmount
-main_l59:
+main_l45:
 itob
 txn GroupIndex
 int 1
@@ -743,19 +601,19 @@ itob
 b*
 bsqrt
 btoi
-store 17
+store 14
 byte "L"
-load 17
+load 14
 app_global_put
 byte "A"
-load 0
+int {primary_asset_id}
 !
-bnz main_l62
+bnz main_l48
 txn GroupIndex
 int 2
 -
 gtxns AssetAmount
-main_l61:
+main_l47:
 app_global_put
 byte "B"
 txn GroupIndex
@@ -763,33 +621,33 @@ int 1
 -
 gtxns AssetAmount
 app_global_put
-load 17
+load 14
 int 1000
 -
-store 17
-load 17
+store 14
+load 14
 txna ApplicationArgs 1
 btoi
 >=
 assert
 byte "LTID"
 app_global_get
-load 17
+load 14
 callsub SendToCaller_0
-b main_l43
-main_l62:
+b main_l29
+main_l48:
 txn GroupIndex
 int 2
 -
 gtxns Amount
-b main_l61
-main_l63:
+b main_l47
+main_l49:
 txn GroupIndex
 int 2
 -
 gtxns Amount
-b main_l59
-main_l64:
+b main_l45
+main_l50:
 txn GroupIndex
 int 2
 -
@@ -817,11 +675,11 @@ gtxns Receiver
 global CurrentApplicationAddress
 ==
 &&
-b main_l35
-main_l65:
-load 0
+b main_l21
+main_l51:
+int {primary_asset_id}
 !
-bnz main_l82
+bnz main_l68
 txn GroupIndex
 int 1
 -
@@ -846,7 +704,7 @@ txn GroupIndex
 int 1
 -
 gtxns XferAsset
-load 0
+int {primary_asset_id}
 ==
 &&
 txn GroupIndex
@@ -856,8 +714,8 @@ gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 &&
-main_l67:
-bnz main_l72
+main_l53:
+bnz main_l58
 txn GroupIndex
 int 1
 -
@@ -882,7 +740,7 @@ txn GroupIndex
 int 1
 -
 gtxns XferAsset
-load 1
+int {secondary_asset_id}
 ==
 &&
 txn GroupIndex
@@ -892,12 +750,12 @@ gtxns AssetReceiver
 global CurrentApplicationAddress
 ==
 &&
-bnz main_l71
+bnz main_l57
 int 0
 return
 int 1
 return
-main_l71:
+main_l57:
 txn GroupIndex
 int 1
 -
@@ -905,6 +763,7 @@ gtxns AssetAmount
 byte "A"
 app_global_get
 mulw
+int 0
 byte "B"
 app_global_get
 txn GroupIndex
@@ -912,150 +771,197 @@ int 1
 -
 gtxns AssetAmount
 +
-divw
-store 12
-load 12
-byte "PACT_FEE_BPS"
-app_global_get
-mulw
-int 10000
-divw
-store 14
-load 12
-int 10000
-byte "FEE_BPS"
-app_global_get
--
-mulw
-int 10000
-divw
-store 13
-load 13
-txna ApplicationArgs 1
-btoi
--
+divmodw
 pop
-byte "A"
-byte "A"
-app_global_get
-load 13
--
-app_global_put
-byte "A"
-byte "A"
-app_global_get
-load 14
--
-app_global_put
-byte "B"
-byte "B"
-app_global_get
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-+
-app_global_put
-load 0
-load 13
-callsub SendToCaller_0
-int 1
-return
-main_l72:
-load 0
+pop
+swap
 !
-bnz main_l81
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-main_l74:
-byte "B"
-app_global_get
-mulw
-byte "A"
-app_global_get
-load 0
-!
-bnz main_l80
-txn GroupIndex
-int 1
--
-gtxns AssetAmount
-main_l76:
-+
-divw
-store 10
-load 10
-byte "PACT_FEE_BPS"
-app_global_get
-mulw
-int 10000
-divw
-store 11
-load 10
-int 10000
-byte "FEE_BPS"
-app_global_get
--
-mulw
-int 10000
-divw
+assert
 store 9
 load 9
+byte "PACT_FEE_BPS"
+app_global_get
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 11
+load 9
+int 10000
+byte "FEE_BPS"
+app_global_get
+-
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 10
+load 10
 txna ApplicationArgs 1
 btoi
 -
 pop
-byte "B"
-byte "B"
+byte "A"
+byte "A"
 app_global_get
-load 9
+load 10
 -
 app_global_put
-byte "B"
-byte "B"
+byte "A"
+byte "A"
 app_global_get
 load 11
 -
 app_global_put
-byte "A"
-byte "A"
+byte "PRIMARY_FEES"
+byte "PRIMARY_FEES"
 app_global_get
-load 0
-!
-bnz main_l79
+load 11
++
+app_global_put
+byte "B"
+byte "B"
+app_global_get
 txn GroupIndex
 int 1
 -
 gtxns AssetAmount
-main_l78:
 +
 app_global_put
-load 1
-load 9
+int {primary_asset_id}
+load 10
 callsub SendToCaller_0
 int 1
 return
-main_l79:
+main_l58:
+int {primary_asset_id}
+!
+bnz main_l67
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+main_l60:
+byte "B"
+app_global_get
+mulw
+int 0
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l66
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+main_l62:
++
+divmodw
+pop
+pop
+swap
+!
+assert
+store 7
+load 7
+byte "PACT_FEE_BPS"
+app_global_get
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 8
+load 7
+int 10000
+byte "FEE_BPS"
+app_global_get
+-
+mulw
+int 0
+int 10000
+divmodw
+pop
+pop
+swap
+!
+assert
+store 6
+load 6
+txna ApplicationArgs 1
+btoi
+-
+pop
+byte "B"
+byte "B"
+app_global_get
+load 6
+-
+app_global_put
+byte "B"
+byte "B"
+app_global_get
+load 8
+-
+app_global_put
+byte "SECONDARY_FEES"
+byte "SECONDARY_FEES"
+app_global_get
+load 8
++
+app_global_put
+byte "A"
+byte "A"
+app_global_get
+int {primary_asset_id}
+!
+bnz main_l65
+txn GroupIndex
+int 1
+-
+gtxns AssetAmount
+main_l64:
++
+app_global_put
+int {secondary_asset_id}
+load 6
+callsub SendToCaller_0
+int 1
+return
+main_l65:
 txn GroupIndex
 int 1
 -
 gtxns Amount
-b main_l78
-main_l80:
+b main_l64
+main_l66:
 txn GroupIndex
 int 1
 -
 gtxns Amount
-b main_l76
-main_l81:
+b main_l62
+main_l67:
 txn GroupIndex
 int 1
 -
 gtxns Amount
-b main_l74
-main_l82:
+b main_l60
+main_l68:
 txn GroupIndex
 int 1
 -
@@ -1083,8 +989,8 @@ gtxns Receiver
 global CurrentApplicationAddress
 ==
 &&
-b main_l67
-main_l83:
+b main_l53
+main_l69:
 txn Sender
 global CreatorAddress
 ==
@@ -1094,31 +1000,31 @@ app_global_get
 int 0
 ==
 assert
-load 0
+int {primary_asset_id}
 !
-bnz main_l91
-load 0
+bnz main_l77
+int {primary_asset_id}
 asset_params_get AssetUnitName
-store 6
-store 5
-load 5
-byte ""
-==
-bnz main_l90
-load 5
 store 3
-main_l86:
-load 1
-asset_params_get AssetUnitName
-store 8
-store 7
-load 7
+store 2
+load 2
 byte ""
 ==
-bnz main_l89
-load 7
+bnz main_l76
+load 2
+store 0
+main_l72:
+int {secondary_asset_id}
+asset_params_get AssetUnitName
+store 5
 store 4
-main_l88:
+load 4
+byte ""
+==
+bnz main_l75
+load 4
+store 1
+main_l74:
 itxn_begin
 int 0
 itxn_field Fee
@@ -1128,10 +1034,10 @@ int 18446744073709551615
 itxn_field ConfigAssetTotal
 int 6
 itxn_field ConfigAssetDecimals
-load 3
+load 0
 byte "/"
 concat
-load 4
+load 1
 concat
 byte " PACT LP Token"
 concat
@@ -1148,28 +1054,28 @@ itxn CreatedAssetID
 app_global_put
 int 1
 return
-main_l89:
+main_l75:
 byte "?"
-store 4
-b main_l88
-main_l90:
+store 1
+b main_l74
+main_l76:
 byte "?"
-store 3
-b main_l86
-main_l91:
+store 0
+b main_l72
+main_l77:
 byte "ALGO"
-store 3
-b main_l86
-main_l92:
+store 0
+b main_l72
+main_l78:
 txn Sender
 global CreatorAddress
 ==
 assert
-load 0
+int {primary_asset_id}
 !
 !
-bnz main_l94
-main_l93:
+bnz main_l80
+main_l79:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -1177,14 +1083,14 @@ global CurrentApplicationAddress
 itxn_field AssetReceiver
 int 0
 itxn_field AssetAmount
-load 1
+int {secondary_asset_id}
 itxn_field XferAsset
 int 0
 itxn_field Fee
 itxn_submit
 int 1
 return
-main_l94:
+main_l80:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -1192,30 +1098,91 @@ global CurrentApplicationAddress
 itxn_field AssetReceiver
 int 0
 itxn_field AssetAmount
-load 0
+int {primary_asset_id}
 itxn_field XferAsset
 int 0
 itxn_field Fee
 itxn_submit
-b main_l93
-main_l95:
+b main_l79
+main_l81:
+int {primary_asset_id}
+int {secondary_asset_id}
+<
+assert
+int {fee_bps}
+int 10000
+<
+assert
+byte "CONFIG"
+int {primary_asset_id}
+itob
+int {secondary_asset_id}
+itob
+concat
+int {fee_bps}
+itob
+concat
+app_global_put
+byte "CONTRACT_NAME"
+byte "PACT AMM"
+app_global_put
+byte "VERSION"
+int 2
+app_global_put
+byte "A"
+int 0
+app_global_put
+byte "B"
+int 0
+app_global_put
+byte "L"
+int 0
+app_global_put
+byte "LTID"
+int 0
+app_global_put
+byte "ADMIN"
+addr {admin_and_treasury_address}
+app_global_put
+byte "TREASURY"
+addr {admin_and_treasury_address}
+app_global_put
+byte "FEE_BPS"
+int {fee_bps}
+app_global_put
+byte "PACT_FEE_BPS"
+int {pact_fee_bps}
+app_global_put
+byte "PRIMARY_FEES"
+int 0
+app_global_put
+byte "SECONDARY_FEES"
+int 0
+app_global_put
+int 1
+return
+main_l82:
+int 0
+return
+main_l83:
 txna Assets 2
 byte "LTID"
 app_global_get
 ==
-b main_l4
+b main_l2
 
 // SendToCaller
 SendToCaller_0:
-proto 2 0
-frame_dig -2
+store 22
+store 21
+load 21
 bnz SendToCaller_0_l2
 itxn_begin
 int pay
 itxn_field TypeEnum
 txn Sender
 itxn_field Receiver
-frame_dig -1
+load 22
 itxn_field Amount
 int 0
 itxn_field Fee
@@ -1227,9 +1194,9 @@ int axfer
 itxn_field TypeEnum
 txn Sender
 itxn_field AssetReceiver
-frame_dig -1
+load 22
 itxn_field AssetAmount
-frame_dig -2
+load 21
 itxn_field XferAsset
 int 0
 itxn_field Fee
@@ -1239,15 +1206,17 @@ retsub
 
 // SendToAddress
 SendToAddress_1:
-proto 3 0
-frame_dig -2
+store 25
+store 24
+store 23
+load 24
 bnz SendToAddress_1_l2
 itxn_begin
 int pay
 itxn_field TypeEnum
-frame_dig -3
+load 23
 itxn_field Receiver
-frame_dig -1
+load 25
 itxn_field Amount
 int 0
 itxn_field Fee
@@ -1257,11 +1226,11 @@ SendToAddress_1_l2:
 itxn_begin
 int axfer
 itxn_field TypeEnum
-frame_dig -3
+load 23
 itxn_field AssetReceiver
-frame_dig -1
+load 25
 itxn_field AssetAmount
-frame_dig -2
+load 24
 itxn_field XferAsset
 int 0
 itxn_field Fee
