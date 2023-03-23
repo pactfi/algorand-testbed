@@ -349,7 +349,7 @@ def farm(staked_asset_id: int, gas_station_id: int, admin: str):
 @deploy_contract.command()
 @click.option(
     "--contract-type",
-    type=click.Choice(["constant_product", "stableswap"]),
+    type=click.Choice(["constant_product", "nft_constant_product", "stableswap"]),
     prompt="Contract type",
 )
 @click.option(
