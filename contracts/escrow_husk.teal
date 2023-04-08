@@ -1,0 +1,40 @@
+#pragma version 8
+txn ApplicationID
+bnz main_l2
+byte "MasterAppID"
+txna ApplicationArgs 1
+btoi
+txnas Applications
+app_global_put
+itxn_begin
+int appl
+itxn_field TypeEnum
+txna ApplicationArgs 2
+btoi
+txnas Applications
+itxn_field ApplicationID
+method "withdraw()void"
+itxn_field ApplicationArgs
+int 0
+itxn_field Fee
+itxn_submit
+itxn_begin
+int axfer
+itxn_field TypeEnum
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+txna ApplicationArgs 3
+btoi
+txnas Assets
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+int 1
+b main_l3
+main_l2:
+int 1
+main_l3:
+return
