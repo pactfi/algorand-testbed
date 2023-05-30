@@ -407,6 +407,40 @@ def deploy_factory(contract_type: str, admin_and_treasury_address: str):
     print("Deployed APP ID:", app_id)
 
 
+@deploy_contract.command()
+def lending_pool_adapter():
+    path = (
+        pathlib.Path(__file__).parent.parent / "contracts" / "lending_pool_adapter.teal"
+    )
+    with open(path, "r") as file_:
+        approval_teal = file_.read()
+    clear_teal = "#pragma version 8\npushint 0 // 0\nreturn"
+
+    approval_teal = approval_teal.replace("LatestTimestamp", "Round")
+
+    compiled_clear = client.compile(clear_teal)
+    compiled_SSC = client.compile(approval_teal)
+
+    ssc_raw: str = compiled_SSC["result"]
+    clear_raw: str = compiled_clear["result"]
+
+    create_app_tx = transaction.ApplicationCreateTxn(
+        sender=DEPLOYER_ADDRESS,
+        on_complete=transaction.OnComplete.NoOpOC,
+        approval_program=b64decode(ssc_raw),
+        clear_program=b64decode(clear_raw),
+        global_schema=transaction.StateSchema(0, 0),
+        local_schema=transaction.StateSchema(0, 0),
+        sp=client.suggested_params(),
+    )
+
+    txid = client.send_transaction(create_app_tx.sign(DEPLOYER_PK))
+    res = wait_for_confirmation(client, txid)
+    app_id = res["application-index"]
+
+    print("Deployed APP ID:", app_id)
+
+
 def sp_fee(sp: transaction.SuggestedParams, fee: int) -> transaction.SuggestedParams:
     sp = copy.copy(sp)
     sp.flat_fee = True

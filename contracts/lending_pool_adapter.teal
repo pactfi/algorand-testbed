@@ -1,0 +1,1112 @@
+#pragma version 8
+txn NumAppArgs
+int 0
+==
+bnz main_l14
+txna ApplicationArgs 0
+method "pre_add_liquidity(txn,txn,asset,asset,asset,asset,application,application,application,application)void"
+==
+bnz main_l13
+txna ApplicationArgs 0
+method "add_liquidity(asset,asset,asset,application,uint64)void"
+==
+bnz main_l12
+txna ApplicationArgs 0
+method "remove_liquidity(axfer,asset,asset,asset,application)void"
+==
+bnz main_l11
+txna ApplicationArgs 0
+method "post_remove_liquidity(asset,asset,asset,asset,application,application,application,uint64,uint64)void"
+==
+bnz main_l10
+txna ApplicationArgs 0
+method "swap(txn,asset,asset,asset,asset,application,application,application,application,uint64)void"
+==
+bnz main_l9
+txna ApplicationArgs 0
+method "opt_in(uint64[])void"
+==
+bnz main_l8
+err
+main_l8:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+store 39
+load 39
+callsub optin_16
+int 1
+return
+main_l9:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 30
+txna ApplicationArgs 2
+int 0
+getbyte
+store 31
+txna ApplicationArgs 3
+int 0
+getbyte
+store 32
+txna ApplicationArgs 4
+int 0
+getbyte
+store 33
+txna ApplicationArgs 5
+int 0
+getbyte
+store 34
+txna ApplicationArgs 6
+int 0
+getbyte
+store 35
+txna ApplicationArgs 7
+int 0
+getbyte
+store 36
+txna ApplicationArgs 8
+int 0
+getbyte
+store 37
+txna ApplicationArgs 9
+btoi
+store 38
+txn GroupIndex
+int 1
+-
+store 29
+load 29
+load 30
+load 31
+load 32
+load 33
+load 34
+load 35
+load 36
+load 37
+load 38
+callsub swap_15
+int 1
+return
+main_l10:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 20
+txna ApplicationArgs 2
+int 0
+getbyte
+store 21
+txna ApplicationArgs 3
+int 0
+getbyte
+store 22
+txna ApplicationArgs 4
+int 0
+getbyte
+store 23
+txna ApplicationArgs 5
+int 0
+getbyte
+store 24
+txna ApplicationArgs 6
+int 0
+getbyte
+store 25
+txna ApplicationArgs 7
+int 0
+getbyte
+store 26
+txna ApplicationArgs 8
+btoi
+store 27
+txna ApplicationArgs 9
+btoi
+store 28
+load 20
+load 21
+load 22
+load 23
+load 24
+load 25
+load 26
+load 27
+load 28
+callsub postremoveliquidity_14
+int 1
+return
+main_l11:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 16
+txna ApplicationArgs 2
+int 0
+getbyte
+store 17
+txna ApplicationArgs 3
+int 0
+getbyte
+store 18
+txna ApplicationArgs 4
+int 0
+getbyte
+store 19
+txn GroupIndex
+int 1
+-
+store 15
+load 15
+gtxns TypeEnum
+int axfer
+==
+assert
+load 15
+load 16
+load 17
+load 18
+load 19
+callsub removeliquidity_13
+int 1
+return
+main_l12:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 10
+txna ApplicationArgs 2
+int 0
+getbyte
+store 11
+txna ApplicationArgs 3
+int 0
+getbyte
+store 12
+txna ApplicationArgs 4
+int 0
+getbyte
+store 13
+txna ApplicationArgs 5
+btoi
+store 14
+load 10
+load 11
+load 12
+load 13
+load 14
+callsub addliquidity_12
+int 1
+return
+main_l13:
+txn OnCompletion
+int NoOp
+==
+txn ApplicationID
+int 0
+!=
+&&
+assert
+txna ApplicationArgs 1
+int 0
+getbyte
+store 2
+txna ApplicationArgs 2
+int 0
+getbyte
+store 3
+txna ApplicationArgs 3
+int 0
+getbyte
+store 4
+txna ApplicationArgs 4
+int 0
+getbyte
+store 5
+txna ApplicationArgs 5
+int 0
+getbyte
+store 6
+txna ApplicationArgs 6
+int 0
+getbyte
+store 7
+txna ApplicationArgs 7
+int 0
+getbyte
+store 8
+txna ApplicationArgs 8
+int 0
+getbyte
+store 9
+txn GroupIndex
+int 2
+-
+store 0
+txn GroupIndex
+int 1
+-
+store 1
+load 0
+load 1
+load 2
+load 3
+load 4
+load 5
+load 6
+load 7
+load 8
+load 9
+callsub preaddliquidity_11
+int 1
+return
+main_l14:
+txn OnCompletion
+int NoOp
+==
+bnz main_l16
+err
+main_l16:
+txn ApplicationID
+int 0
+==
+assert
+int 1
+return
+
+// get_currrent_app_balance
+getcurrrentappbalance_0:
+proto 1 1
+frame_dig -1
+bnz getcurrrentappbalance_0_l2
+global CurrentApplicationAddress
+balance
+global CurrentApplicationAddress
+min_balance
+-
+b getcurrrentappbalance_0_l3
+getcurrrentappbalance_0_l2:
+global CurrentApplicationAddress
+frame_dig -1
+asset_holding_get AssetBalance
+store 47
+store 46
+load 46
+getcurrrentappbalance_0_l3:
+retsub
+
+// app_global_get_ex_safe
+appglobalgetexsafe_1:
+proto 2 1
+frame_dig -2
+frame_dig -1
+app_global_get_ex
+store 55
+store 54
+load 55
+assert
+load 54
+retsub
+
+// _inner_transfer_txn
+innertransfertxn_2:
+proto 3 0
+frame_dig -1
+bnz innertransfertxn_2_l2
+int pay
+itxn_field TypeEnum
+frame_dig -3
+itxn_field Receiver
+frame_dig -2
+itxn_field Amount
+int 0
+itxn_field Fee
+b innertransfertxn_2_l3
+innertransfertxn_2_l2:
+int axfer
+itxn_field TypeEnum
+frame_dig -3
+itxn_field AssetReceiver
+frame_dig -2
+itxn_field AssetAmount
+frame_dig -1
+itxn_field XferAsset
+int 0
+itxn_field Fee
+innertransfertxn_2_l3:
+retsub
+
+// get_current_deposit_interest_index
+getcurrentdepositinterestindex_3:
+proto 1 1
+frame_dig -1
+byte "i"
+app_global_get_ex
+store 41
+store 40
+load 41
+assert
+load 40
+int 40
+extract_uint64
+int 10000000000000000
+load 40
+int 32
+extract_uint64
+global LatestTimestamp
+load 40
+int 48
+extract_uint64
+-
+mulw
+int 31536000
+divw
++
+mulw
+int 10000000000000000
+divw
+retsub
+
+// liquidity_calculation
+liquiditycalculation_4:
+proto 5 1
+frame_dig -4
+frame_dig -2
+mulw
+itob
+swap
+itob
+swap
+concat
+frame_dig -5
+itob
+b*
+frame_dig -3
+frame_dig -1
+mulw
+itob
+swap
+itob
+swap
+concat
+b/
+store 56
+load 56
+len
+int 8
+>
+bnz liquiditycalculation_4_l2
+load 56
+btoi
+int 1
++
+b liquiditycalculation_4_l3
+liquiditycalculation_4_l2:
+int 18446744073709551615
+liquiditycalculation_4_l3:
+retsub
+
+// calculate_required_deposits_add_liquidity
+calculaterequireddepositsaddliquidity_5:
+proto 7 0
+frame_dig -1
+store 49
+frame_dig -2
+store 48
+frame_dig -3
+byte "A"
+callsub appglobalgetexsafe_1
+store 50
+frame_dig -3
+byte "B"
+callsub appglobalgetexsafe_1
+store 51
+frame_dig -5
+callsub getcurrentdepositinterestindex_3
+store 52
+frame_dig -4
+callsub getcurrentdepositinterestindex_3
+store 53
+load 50
+bnz calculaterequireddepositsaddliquidity_5_l2
+load 48
+frame_dig -7
+stores
+load 49
+frame_dig -6
+stores
+b calculaterequireddepositsaddliquidity_5_l3
+calculaterequireddepositsaddliquidity_5_l2:
+load 48
+frame_dig -7
+frame_dig -6
+load 50
+load 51
+load 52
+load 53
+callsub liquiditycalculation_4
+dup2
+>
+select
+stores
+load 49
+frame_dig -6
+frame_dig -7
+load 51
+load 50
+load 53
+load 52
+callsub liquiditycalculation_4
+dup2
+>
+select
+stores
+calculaterequireddepositsaddliquidity_5_l3:
+retsub
+
+// folks_lending_deposit
+folkslendingdeposit_6:
+proto 5 0
+frame_dig -5
+app_params_get AppAddress
+store 58
+store 57
+itxn_begin
+load 57
+frame_dig -1
+frame_dig -3
+callsub innertransfertxn_2
+itxn_next
+int appl
+itxn_field TypeEnum
+frame_dig -5
+itxn_field ApplicationID
+method "deposit(txn,account,asset,asset,application)uint64"
+itxn_field ApplicationArgs
+byte 0x00
+itxn_field ApplicationArgs
+byte 0x00
+itxn_field ApplicationArgs
+byte 0x01
+itxn_field ApplicationArgs
+byte 0x01
+itxn_field ApplicationArgs
+frame_dig -4
+itxn_field Applications
+frame_dig -3
+itxn_field Assets
+frame_dig -2
+itxn_field Assets
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// folks_lending_withdraw
+folkslendingwithdraw_7:
+proto 4 0
+frame_dig -4
+app_params_get AppAddress
+store 67
+store 66
+itxn_begin
+load 66
+frame_dig -1
+callsub getcurrrentappbalance_0
+frame_dig -1
+callsub innertransfertxn_2
+itxn_next
+int appl
+itxn_field TypeEnum
+frame_dig -4
+itxn_field ApplicationID
+method "withdraw(axfer,uint64,account,asset,asset,application)uint64"
+itxn_field ApplicationArgs
+int 0
+itob
+itxn_field ApplicationArgs
+byte 0x00
+itxn_field ApplicationArgs
+byte 0x00
+itxn_field ApplicationArgs
+byte 0x01
+itxn_field ApplicationArgs
+byte 0x01
+itxn_field ApplicationArgs
+frame_dig -3
+itxn_field Applications
+frame_dig -2
+itxn_field Assets
+frame_dig -1
+itxn_field Assets
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// pact_add_liquidity
+pactaddliquidity_8:
+proto 4 0
+frame_dig -1
+app_params_get AppAddress
+store 61
+store 60
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 60
+itxn_field AssetReceiver
+frame_dig -4
+callsub getcurrrentappbalance_0
+itxn_field AssetAmount
+frame_dig -4
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_next
+int axfer
+itxn_field TypeEnum
+load 60
+itxn_field AssetReceiver
+frame_dig -3
+callsub getcurrrentappbalance_0
+itxn_field AssetAmount
+frame_dig -3
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_next
+int appl
+itxn_field TypeEnum
+frame_dig -1
+itxn_field ApplicationID
+int NoOp
+itxn_field OnCompletion
+byte "ADDLIQ"
+itxn_field ApplicationArgs
+int 0
+itob
+itxn_field ApplicationArgs
+frame_dig -4
+itxn_field Assets
+frame_dig -3
+itxn_field Assets
+frame_dig -2
+itxn_field Assets
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// pact_remove_liquidity
+pactremoveliquidity_9:
+proto 4 0
+frame_dig -1
+app_params_get AppAddress
+store 63
+store 62
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 62
+itxn_field AssetReceiver
+frame_dig -2
+callsub getcurrrentappbalance_0
+itxn_field AssetAmount
+frame_dig -2
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_next
+int appl
+itxn_field TypeEnum
+frame_dig -1
+itxn_field ApplicationID
+int NoOp
+itxn_field OnCompletion
+byte "REMLIQ"
+itxn_field ApplicationArgs
+int 0
+itob
+itxn_field ApplicationArgs
+int 0
+itob
+itxn_field ApplicationArgs
+frame_dig -4
+itxn_field Assets
+frame_dig -3
+itxn_field Assets
+frame_dig -2
+itxn_field Assets
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// pact_swap
+pactswap_10:
+proto 4 0
+frame_dig -1
+app_params_get AppAddress
+store 76
+store 75
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 75
+itxn_field AssetReceiver
+frame_dig -2
+callsub getcurrrentappbalance_0
+itxn_field AssetAmount
+frame_dig -2
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_next
+int appl
+itxn_field TypeEnum
+frame_dig -1
+itxn_field ApplicationID
+int NoOp
+itxn_field OnCompletion
+byte "SWAP"
+itxn_field ApplicationArgs
+int 0
+itob
+itxn_field ApplicationArgs
+frame_dig -4
+itxn_field Assets
+frame_dig -3
+itxn_field Assets
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// pre_add_liquidity
+preaddliquidity_11:
+proto 10 0
+txn GroupIndex
+int 1
++
+gtxns ApplicationID
+txn ApplicationID
+==
+// next transaction must be add liquidity
+assert
+txn GroupIndex
+int 1
++
+gtxnsa ApplicationArgs 0
+method "add_liquidity(asset,asset,asset,application,uint64)void"
+==
+// next transaction must be add liquidity
+assert
+frame_dig -8
+txnas Assets
+callsub getcurrrentappbalance_0
+store 42
+frame_dig -7
+txnas Assets
+callsub getcurrrentappbalance_0
+store 43
+int 0
+store 44
+int 0
+store 45
+load 42
+load 43
+frame_dig -4
+txnas Applications
+frame_dig -3
+txnas Applications
+frame_dig -1
+txnas Applications
+int 44
+int 45
+callsub calculaterequireddepositsaddliquidity_5
+frame_dig -4
+txnas Applications
+frame_dig -2
+txnas Applications
+frame_dig -8
+txnas Assets
+frame_dig -6
+txnas Assets
+load 44
+callsub folkslendingdeposit_6
+frame_dig -3
+txnas Applications
+frame_dig -2
+txnas Applications
+frame_dig -7
+txnas Assets
+frame_dig -5
+txnas Assets
+load 45
+callsub folkslendingdeposit_6
+load 42
+load 44
+>
+bnz preaddliquidity_11_l3
+load 43
+load 45
+>
+bz preaddliquidity_11_l4
+itxn_begin
+txn Sender
+load 43
+load 45
+-
+frame_dig -7
+txnas Assets
+callsub innertransfertxn_2
+itxn_submit
+b preaddliquidity_11_l4
+preaddliquidity_11_l3:
+itxn_begin
+txn Sender
+load 42
+load 44
+-
+frame_dig -8
+txnas Assets
+callsub innertransfertxn_2
+itxn_submit
+preaddliquidity_11_l4:
+retsub
+
+// add_liquidity
+addliquidity_12:
+proto 5 0
+txn GroupIndex
+int 1
+-
+gtxns ApplicationID
+txn ApplicationID
+==
+// previous transaction must be prepare_for_add_liquidity
+assert
+txn GroupIndex
+int 1
+-
+gtxnsa ApplicationArgs 0
+method "pre_add_liquidity(txn,txn,asset,asset,asset,asset,application,application,application,application)void"
+==
+// previous transaction must be prepare_for_add_liquidity
+assert
+frame_dig -5
+txnas Assets
+frame_dig -4
+txnas Assets
+frame_dig -3
+txnas Assets
+frame_dig -2
+txnas Applications
+callsub pactaddliquidity_8
+frame_dig -3
+txnas Assets
+callsub getcurrrentappbalance_0
+store 59
+load 59
+frame_dig -1
+-
+pop
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+load 59
+itxn_field AssetAmount
+frame_dig -3
+txnas Assets
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// remove_liquidity
+removeliquidity_13:
+proto 5 0
+txn GroupIndex
+int 1
++
+gtxns ApplicationID
+txn ApplicationID
+==
+// next transaction must be post_remove_liquidity
+assert
+txn GroupIndex
+int 1
++
+gtxnsa ApplicationArgs 0
+method "post_remove_liquidity(asset,asset,asset,asset,application,application,application,uint64,uint64)void"
+==
+assert
+frame_dig -4
+txnas Assets
+frame_dig -3
+txnas Assets
+frame_dig -2
+txnas Assets
+frame_dig -1
+txnas Applications
+callsub pactremoveliquidity_9
+retsub
+
+// post_remove_liquidity
+postremoveliquidity_14:
+proto 9 0
+txn GroupIndex
+int 1
+-
+gtxns ApplicationID
+txn ApplicationID
+==
+// previous transaction must be remove_liquidity
+assert
+txn GroupIndex
+int 1
+-
+gtxnsa ApplicationArgs 0
+method "remove_liquidity(axfer,asset,asset,asset,application)void"
+==
+// previous transaction must be remove_liquidity
+assert
+frame_dig -5
+txnas Applications
+frame_dig -3
+txnas Applications
+frame_dig -9
+txnas Assets
+frame_dig -7
+txnas Assets
+callsub folkslendingwithdraw_7
+frame_dig -4
+txnas Applications
+frame_dig -3
+txnas Applications
+frame_dig -8
+txnas Assets
+frame_dig -6
+txnas Assets
+callsub folkslendingwithdraw_7
+frame_dig -9
+txnas Assets
+callsub getcurrrentappbalance_0
+store 64
+frame_dig -8
+txnas Assets
+callsub getcurrrentappbalance_0
+store 65
+load 64
+frame_dig -2
+-
+pop
+load 65
+frame_dig -1
+-
+pop
+itxn_begin
+txn Sender
+load 64
+frame_dig -9
+txnas Assets
+callsub innertransfertxn_2
+itxn_submit
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txn Sender
+itxn_field AssetReceiver
+load 65
+itxn_field AssetAmount
+frame_dig -8
+txnas Assets
+itxn_field XferAsset
+int 0
+itxn_field Fee
+itxn_submit
+retsub
+
+// swap
+swap_15:
+proto 10 0
+frame_dig -10
+gtxns TypeEnum
+int pay
+==
+bnz swap_15_l5
+frame_dig -10
+gtxns XferAsset
+store 68
+swap_15_l2:
+frame_dig -9
+txnas Assets
+load 68
+==
+bnz swap_15_l4
+frame_dig -9
+txnas Assets
+store 70
+frame_dig -6
+txnas Assets
+store 69
+frame_dig -7
+txnas Assets
+store 71
+frame_dig -4
+txnas Applications
+store 72
+frame_dig -5
+txnas Applications
+store 73
+b swap_15_l6
+swap_15_l4:
+frame_dig -8
+txnas Assets
+store 70
+frame_dig -7
+txnas Assets
+store 69
+frame_dig -6
+txnas Assets
+store 71
+frame_dig -5
+txnas Applications
+store 72
+frame_dig -4
+txnas Applications
+store 73
+b swap_15_l6
+swap_15_l5:
+int 0
+store 68
+b swap_15_l2
+swap_15_l6:
+load 68
+frame_dig -9
+txnas Assets
+==
+load 68
+frame_dig -8
+txnas Assets
+==
+||
+// deposited asset must be one of the two provided ABI assets
+assert
+load 72
+frame_dig -3
+txnas Applications
+load 68
+load 69
+load 68
+callsub getcurrrentappbalance_0
+callsub folkslendingdeposit_6
+frame_dig -7
+txnas Assets
+frame_dig -6
+txnas Assets
+load 69
+frame_dig -2
+txnas Applications
+callsub pactswap_10
+load 73
+frame_dig -3
+txnas Applications
+load 70
+load 71
+callsub folkslendingwithdraw_7
+load 70
+callsub getcurrrentappbalance_0
+store 74
+load 74
+frame_dig -1
+-
+pop
+itxn_begin
+txn Sender
+load 74
+load 70
+callsub innertransfertxn_2
+itxn_submit
+retsub
+
+// opt_in
+optin_16:
+proto 1 0
+int 0
+dupn 2
+int 0
+store 77
+optin_16_l1:
+load 77
+frame_dig -1
+int 0
+extract_uint16
+frame_bury 1
+frame_dig 1
+<
+bz optin_16_l3
+frame_dig -1
+int 8
+load 77
+*
+int 2
++
+extract_uint64
+frame_bury 0
+itxn_begin
+global CurrentApplicationAddress
+int 0
+frame_dig 0
+callsub innertransfertxn_2
+itxn_submit
+load 77
+int 1
++
+store 77
+b optin_16_l1
+optin_16_l3:
+retsub
