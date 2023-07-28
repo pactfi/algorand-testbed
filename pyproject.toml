@@ -7,9 +7,9 @@ authors = ["krystiansiwek <krystian.siwek@yahoo.com>", "sebastiangula <sebastian
 [tool.poetry.dependencies]
 python = "^3.9"
 py-algorand-sdk = "^2.0.0"
-PyYAML = "^5.4.1"
 click = "^8.0.3"
 python-dotenv = "^0.19.1"
+cffi = "^1.15.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
